@@ -1,0 +1,3 @@
+hello : string = 'bitches'
+
+hello = 1

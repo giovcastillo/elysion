@@ -1,0 +1,3 @@
+sourceDir: 'test/src'
+compilerOptions:
+  outDir: 'test/dist'
