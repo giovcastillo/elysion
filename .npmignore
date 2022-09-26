@@ -1,7 +1,0 @@
-browser
-.babelrc
-webpack.config.js
-node_modules
-.vscode
-.upm
-package-lock.json
