@@ -1,3 +1,6 @@
+const { ElysionError, throwSyntaxError } = require('./helpers');
+const { Sources } = require('./sourcemaps');
+
 const Nodes = {};
 
 class Parser {
@@ -14,7 +17,7 @@ class Parser {
 
   parse({ scope }) {
     let sources, js, registry;
-    sources = new (require('./sourcemaps').Sources)();
+    sources = new Sources();
     registry = { sources: this.sourceMaps ? sources : undefined, scope: ['Root'], useVar: this.useVar, isELSON: this.isELSON, omitTypeScript: this.omitTypeScript };
     js = this.nodes.parse({ comments: this.comments, registry, wrapSafe: this.wrapSafe, scope, tsCheck: this.tsCheck });
     return { js, sources, isTypeScript: registry.isTypeScript };
@@ -871,7 +874,7 @@ Nodes.Expression = class Expression extends Base {
         addSemicolon.pop();
         let [Condition, Body, Keyword] = Exp.contents;
 
-        output += "while (" + Condition.parse({ addSemicolon: [], constants, vars, varExistent, that, $such, scope, isValue: true, prevLine, tabs, isCondition: true, isAssigned, scopedParams, comments, registry, isUnless: Keyword[0] === "UNTIL", FiresSuper, FiresAwait, FiresYield }) + ") {\n" + tab(tabs + 1) + Body.parse({ lineReturns: !!assignRes, that, $such, scope, vars, varExistent, constants, tabs: tabs + 1, comments, registry, isChildren: true, assignRes, FiresSuper, FiresAwait, FiresYield }) + "\n" + tab(tabs) + "}";
+        output += "while (" + Condition.parse({ addSemicolon: [], constants, vars, varExistent, that, $such, scope, isValue: true, prevLine, tabs, isCondition: true, isAssigned, scopedParams, comments, registry, isUnless: Keyword[0].endsWith("UNTIL"), FiresSuper, FiresAwait, FiresYield }) + ") {\n" + tab(tabs + 1) + Body.parse({ lineReturns: !!assignRes, that, $such, scope, vars, varExistent, constants, tabs: tabs + 1, comments, registry, isChildren: true, assignRes, FiresSuper, FiresAwait, FiresYield }) + "\n" + tab(tabs) + "}";
         break;
       };
       case "Switch": {
@@ -2336,10 +2339,10 @@ Nodes.Statement = class Statement extends Base {
       };
       case "Return": {
         output += "return";
-        if (Expression.rule === "RETURN Expression") {
-          output += " " + Expression.unwrap.parse({ addSemicolon, that, $such, scope, constants, vars, varExistent, prevLine, tabs, isClass, isLine, func, scopedParams, nl, comments, lastNodeLocation, registry, FiresSuper, FiresAwait, FiresYield });
-        } else if (Expression.rule === "RETURN INDENT Body OUTDENT") {
-
+        if (Expression.rule === "RETURN INDENT Body OUTDENT") {
+          output += " " + Expression.unwrap.parse({ scope, constants, vars, varExistent, prevLine, tabs, scopedParams, nl, comments, lastNodeLocation, registry, callSelf: true });
+        } else if (Expression) {
+          output += " " + Expression.unwrap.parse({ addSemicolon, that, $such, scope, constants, vars, varExistent, prevLine, tabs, isClass, isLine, func, scopedParams, nl, comments, lastNodeLocation, registry, FiresSuper, FiresAwait, isValue: true });
         }
         break;
       };
@@ -2970,7 +2973,7 @@ function loadSoaks(res, { tabs, scope, vars, prevLine, Soaks, registry, loc }) {
 }
 
 let $$missing = [];
-for (let key in require('./grammar')) {
+for (let key in require("./grammar")) {
   if (Nodes[key]) continue;
   Nodes[key] = Base;
   $$missing.push(key);

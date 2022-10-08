@@ -1,0 +1,1111 @@
+/*! Production::    $accept : Root $end */
+
+/*! Production::    Access : "." PROPERTY */
+
+/*! Production::    Access : INDEX_START Expression INDEX_END */
+
+/*! Production::    AlphaNum : NUMBER */
+
+/*! Production::    AlphaNum : String */
+
+/*! Production::    Arg : "..." Expression */
+
+/*! Production::    Arg : Expression "..." */
+
+/*! Production::    Arg : Expression */
+
+/*! Production::    ArgList : Arg */
+
+/*! Production::    ArgList : ArgList "," Arg */
+
+/*! Production::    ArgList : ArgList OptComma INDENT ArgList OptComma OUTDENT */
+
+/*! Production::    ArgList : ArgList OptComma NEWLINE Arg */
+
+/*! Production::    Arguments : CALL_START ArgList OptComma CALL_END */
+
+/*! Production::    Arguments : CALL_START CALL_END */
+
+/*! Production::    Arguments : CALL_START INDENT ArgList OptComma OUTDENT CALL_END */
+
+/*! Production::    Array : "[" "]" */
+
+/*! Production::    Array : "[" ArrayList OptVoids "]" */
+
+/*! Production::    Array : "[" INDENT ArrayList OptVoids OUTDENT "]" */
+
+/*! Production::    ArrayArg : "..." Expression */
+
+/*! Production::    ArrayArg : Expression "..." */
+
+/*! Production::    ArrayArg : Expression */
+
+/*! Production::    ArrayArg : Voids Expression */
+
+/*! Production::    ArrayList : ArrayArg */
+
+/*! Production::    ArrayList : ArrayList "," ArrayArg */
+
+/*! Production::    ArrayList : ArrayList OptComma INDENT ArrayList OptVoids OUTDENT */
+
+/*! Production::    ArrayList : ArrayList OptComma NEWLINE ArrayArg */
+
+/*! Production::    Assign : Assignment */
+
+/*! Production::    AssignKeyword : AS */
+
+/*! Production::    AssignKeyword : AT */
+
+/*! Production::    AssignKeyword : FROM */
+
+/*! Production::    Assignable : ARGUMENT */
+
+/*! Production::    Assignable : Array */
+
+/*! Production::    Assignable : Identifier */
+
+/*! Production::    Assignable : Object */
+
+/*! Production::    Assignable : Value Access */
+
+/*! Production::    Assignment : Assignable AssignKeyword Block */
+
+/*! Production::    Assignment : Assignable AssignKeyword Expression */
+
+/*! Production::    Assignment : Assignable AssignKeyword INDENT Expression OUTDENT */
+
+/*! Production::    Assignment : Assignable AssignKeyword NEWLINE Expression */
+
+/*! Production::    Block : "{" Body "}" */
+
+/*! Production::    Block : "{{" "}}" */
+
+/*! Production::    Block : "{{" INDENT Body OUTDENT "}}" */
+
+/*! Production::    Block : "{{" INDENT OUTDENT "}}" */
+
+/*! Production::    Block : INDENT Body OUTDENT */
+
+/*! Production::    Block : INDENT OUTDENT */
+
+/*! Production::    BlockExpression : Expression */
+
+/*! Production::    BlockExpression : INDENT Expression OUTDENT */
+
+/*! Production::    Body : Body NEWLINE */
+
+/*! Production::    Body : Body NEWLINE Line */
+
+/*! Production::    Body : Line */
+
+/*! Production::    Case : BREAK */
+
+/*! Production::    Case : Clauses Block */
+
+/*! Production::    Case : Clauses THEN Block */
+
+/*! Production::    Case : Clauses THEN Expression */
+
+/*! Production::    Case : DEFAULT Block */
+
+/*! Production::    Case : DEFAULT Expression */
+
+/*! Production::    Case : Expression POSTCASE MulticheckClauses */
+
+/*! Production::    Case : Multicondition Block */
+
+/*! Production::    Case : Multicondition THEN Block */
+
+/*! Production::    Case : Multicondition THEN Expression */
+
+/*! Production::    Cases : Case */
+
+/*! Production::    Cases : Cases NEWLINE Case */
+
+/*! Production::    Catch : CATCH Block */
+
+/*! Production::    Catch : CATCH Expression */
+
+/*! Production::    Catch : CATCH Identifier Block */
+
+/*! Production::    Catch : CATCH Identifier THEN Block */
+
+/*! Production::    Catch : CATCH Identifier THEN Expression */
+
+/*! Production::    Class : CLASS Block */
+
+/*! Production::    Class : CLASS EXTENDS Value */
+
+/*! Production::    Class : CLASS EXTENDS Value Block */
+
+/*! Production::    Class : CLASS EXTENDS Value THEN Block */
+
+/*! Production::    Class : CLASS Identifier */
+
+/*! Production::    Class : CLASS Identifier Block */
+
+/*! Production::    Class : CLASS Identifier EXTENDS Value */
+
+/*! Production::    Class : CLASS Identifier EXTENDS Value Block */
+
+/*! Production::    Class : CLASS Identifier EXTENDS Value THEN Block */
+
+/*! Production::    Class : CLASS Identifier THEN Block */
+
+/*! Production::    Class : CLASS THEN Block */
+
+/*! Production::    Clause : Clause COMPOUND_AND Compare Expression */
+
+/*! Production::    Clause : Compare Expression */
+
+/*! Production::    Clause : Expression */
+
+/*! Production::    Clauses : Clauses COMPOUND_OR When */
+
+/*! Production::    Clauses : Clauses NEWLINE When */
+
+/*! Production::    Clauses : When */
+
+/*! Production::    Code : ASYNC Code */
+
+/*! Production::    Code : FUNC_DIRECTIVE Expression */
+
+/*! Production::    Code : PARAM_START PARAM_END FUNC_DIRECTIVE Block */
+
+/*! Production::    Code : PARAM_START PARAM_END FUNC_DIRECTIVE Expression */
+
+/*! Production::    Code : PARAM_START ParamList PARAM_END FUNC_DIRECTIVE Block */
+
+/*! Production::    Code : PARAM_START ParamList PARAM_END FUNC_DIRECTIVE Expression */
+
+/*! Production::    Code : WITHIN Block */
+
+/*! Production::    Code : WITHIN PARAM_START PARAM_END Block */
+
+/*! Production::    Code : WITHIN PARAM_START PARAM_END Expression */
+
+/*! Production::    Code : WITHIN PARAM_START PARAM_END THEN Block */
+
+/*! Production::    Code : WITHIN PARAM_START PARAM_END THEN Expression */
+
+/*! Production::    Code : WITHIN PARAM_START ParamList PARAM_END Block */
+
+/*! Production::    Code : WITHIN PARAM_START ParamList PARAM_END Expression */
+
+/*! Production::    Code : WITHIN PARAM_START ParamList PARAM_END THEN Block */
+
+/*! Production::    Code : WITHIN PARAM_START ParamList PARAM_END THEN Expression */
+
+/*! Production::    Compare : "!=" */
+
+/*! Production::    Compare : "!==" */
+
+/*! Production::    Compare : "<" */
+
+/*! Production::    Compare : "<=" */
+
+/*! Production::    Compare : "==" */
+
+/*! Production::    Compare : "===" */
+
+/*! Production::    Compare : ">" */
+
+/*! Production::    Compare : ">=" */
+
+/*! Production::    Compare : IN */
+
+/*! Production::    Compare : INSTANCEOF */
+
+/*! Production::    Compare : IS */
+
+/*! Production::    Compare : ISNT */
+
+/*! Production::    Declaration : Assignment */
+
+/*! Production::    Declaration : Identifier */
+
+/*! Production::    DeclarationKeyword : CONST */
+
+/*! Production::    DeclarationKeyword : LET */
+
+/*! Production::    DeclarationKeyword : VAR */
+
+/*! Production::    Declarations : Declaration */
+
+/*! Production::    Declarations : Declarations "," Declaration */
+
+/*! Production::    Declarations : Declarations OptComma INDENT Declarations OUTDENT */
+
+/*! Production::    Declarations : Declarations OptComma NEWLINE Declaration */
+
+/*! Production::    Declare : DeclarationKeyword Declarations */
+
+/*! Production::    Declare : DeclarationKeyword INDENT Declarations OUTDENT */
+
+/*! Production::    Else : ElseOtherwise Block */
+
+/*! Production::    Else : ElseOtherwise Expression */
+
+/*! Production::    Else : ElseOtherwise Statement */
+
+/*! Production::    Else : ElseOtherwise THEN Block */
+
+/*! Production::    ElseOtherwise : ELSE */
+
+/*! Production::    ElseOtherwise : OR */
+
+/*! Production::    ElseOtherwise : OTHERWISE */
+
+/*! Production::    Export : EXPORT DEFAULT Expression */
+
+/*! Production::    Export : EXPORT Declare */
+
+/*! Production::    Export : EXPORT ExportList */
+
+/*! Production::    Export : EXPORT Exportable */
+
+/*! Production::    Export : EXPORT INDENT DEFAULT Expression OUDENT */
+
+/*! Production::    Export : EXPORT INDENT Declare OUTDENT */
+
+/*! Production::    Export : EXPORT INDENT ExportList OUTDENT */
+
+/*! Production::    Export : EXPORT INDENT Exportable OUTDENT */
+
+/*! Production::    ExportList : "{" ExportNames "}" */
+
+/*! Production::    ExportList : "{{" INDENT ExportNames OUTDENT "}}" */
+
+/*! Production::    ExportName : Identifier */
+
+/*! Production::    ExportName : Identifier AS DEFAULT */
+
+/*! Production::    ExportName : Identifier AS Identifier */
+
+/*! Production::    ExportName : PROPERTY ":" */
+
+/*! Production::    ExportName : PROPERTY ":" AS Identifier */
+
+/*! Production::    ExportName : PROPERTY ":" Identifier */
+
+/*! Production::    ExportNames : ExportName */
+
+/*! Production::    ExportNames : ExportNames "," ExportName */
+
+/*! Production::    ExportNames : ExportNames OptComma NEWLINE ExportName */
+
+/*! Production::    Exportable : Class */
+
+/*! Production::    Exportable : Function */
+
+/*! Production::    Expression : Assign */
+
+/*! Production::    Expression : Class */
+
+/*! Production::    Expression : Code */
+
+/*! Production::    Expression : For */
+
+/*! Production::    Expression : If */
+
+/*! Production::    Expression : Label */
+
+/*! Production::    Expression : Operation */
+
+/*! Production::    Expression : Switch */
+
+/*! Production::    Expression : TryBlock */
+
+/*! Production::    Expression : Value */
+
+/*! Production::    Expression : While */
+
+/*! Production::    Finally : FINALLY Block */
+
+/*! Production::    Finally : FINALLY Expression */
+
+/*! Production::    For : Expression POSTFOR DeclarationKeyword Identifier "," Assignable ForAny Expression */
+
+/*! Production::    For : Expression POSTFOR ForAssignable FOR_IN Expression */
+
+/*! Production::    For : Expression POSTFOR ForAssignable FOR_OF Expression */
+
+/*! Production::    For : Expression POSTFOR Identifier "," Assignable ForAny Expression */
+
+/*! Production::    For : FOR DeclarationKeyword Identifier "," Assignable ForAny Expression Block */
+
+/*! Production::    For : FOR DeclarationKeyword Identifier "," Assignable ForAny Expression THEN Block */
+
+/*! Production::    For : FOR DeclarationKeyword Identifier "," Assignable ForAny Expression THEN Expression */
+
+/*! Production::    For : FOR ForAssignable FOR_IN Expression Block */
+
+/*! Production::    For : FOR ForAssignable FOR_IN Expression THEN Block */
+
+/*! Production::    For : FOR ForAssignable FOR_IN Expression THEN Expression */
+
+/*! Production::    For : FOR ForAssignable FOR_OF Expression Block */
+
+/*! Production::    For : FOR ForAssignable FOR_OF Expression THEN Block */
+
+/*! Production::    For : FOR ForAssignable FOR_OF Expression THEN Expression */
+
+/*! Production::    For : FOR ForExpression ";" Expression ";" Expression Block */
+
+/*! Production::    For : FOR ForExpression ";" Expression ";" Expression THEN Block */
+
+/*! Production::    For : FOR ForExpression ";" Expression ";" Expression THEN Expression */
+
+/*! Production::    For : FOR ForExpression WHEN Expression WHILST Expression Block */
+
+/*! Production::    For : FOR ForExpression WHEN Expression WHILST Expression THEN Block */
+
+/*! Production::    For : FOR ForExpression WHEN Expression WHILST Expression THEN Expression */
+
+/*! Production::    For : FOR Identifier "," Assignable ForAny Expression Block */
+
+/*! Production::    For : FOR Identifier "," Assignable ForAny Expression THEN Block */
+
+/*! Production::    For : FOR Identifier "," Assignable ForAny Expression THEN Expression */
+
+/*! Production::    ForAny : FOR_AS */
+
+/*! Production::    ForAny : FOR_AT */
+
+/*! Production::    ForAny : FOR_FROM */
+
+/*! Production::    ForAssignable : Assignable */
+
+/*! Production::    ForAssignable : DeclarationKeyword Assignable */
+
+/*! Production::    ForExpression : Declare */
+
+/*! Production::    ForExpression : JointExpression */
+
+/*! Production::    FuncBody : Block */
+
+/*! Production::    FuncBody : THEN Block */
+
+/*! Production::    FuncBody : THEN Expression */
+
+/*! Production::    FuncHeader : Identifier TypeArguments? */
+
+/*! Production::    FuncHeader : Identifier TypeArguments? Params */
+
+/*! Production::    FuncHeader : Identifier TypeArguments? WITH */
+
+/*! Production::    FuncHeader : Identifier TypeArguments? WITH Params */
+
+/*! Production::    FuncHeader : Identifier WITH TypeArguments? */
+
+/*! Production::    FuncHeader : Identifier WITH TypeArguments? Params */
+
+/*! Production::    FuncHeader : TypeArguments? Params */
+
+/*! Production::    FuncHeader : TypeArguments? WITH Params */
+
+/*! Production::    FuncHeader : WITH TypeArguments? Params */
+
+/*! Production::    FuncSpecifiers : ASYNC */
+
+/*! Production::    FuncSpecifiers : GET */
+
+/*! Production::    FuncSpecifiers : SET */
+
+/*! Production::    FuncSpecifiers : STATIC */
+
+/*! Production::    FuncSpecifiers : STATIC ASYNC */
+
+/*! Production::    FuncSpecifiers : STATIC GET */
+
+/*! Production::    FuncSpecifiers : STATIC SET */
+
+/*! Production::    Function : ASYNC FUNCTION FuncHeader FuncBody */
+
+/*! Production::    Function : ASYNC FUNCTION WITH "<(" TypeArguments ")>" FuncBody */
+
+/*! Production::    Function : ASYNC FUNCTION WITH FuncBody */
+
+/*! Production::    Function : FUNCTION FuncHeader FuncBody */
+
+/*! Production::    Function : FUNCTION WITH "<(" TypeArguments ")>" FuncBody */
+
+/*! Production::    Function : FUNCTION WITH FuncBody */
+
+/*! Production::    Function : FUNC_DIRECTIVE Block */
+
+/*! Production::    Function : FuncHeader */
+
+/*! Production::    Function : FuncHeader FuncBody */
+
+/*! Production::    Function : FuncSpecifiers FuncHeader FuncBody */
+
+/*! Production::    Function : WITH "<(" TypeArguments ")>" Block */
+
+/*! Production::    Function : WITH "<(" TypeArguments ")>" THEN Block */
+
+/*! Production::    Function : WITH Block */
+
+/*! Production::    Identifier : IDENTIFIER */
+
+/*! Production::    Identifier? : %epsilon */
+
+/*! Production::    Identifier? : Identifier */
+
+/*! Production::    If : Expression "?" BlockExpression ":" BlockExpression */
+
+/*! Production::    If : Expression "?" BlockExpression */
+
+/*! Production::    If : Expression "?" INDENT BlockExpression ":" BlockExpression OUTDENT */
+
+/*! Production::    If : Expression POSTIF Expression */
+
+/*! Production::    If : Expression POSTUNLESS Expression */
+
+/*! Production::    If : IfBlock */
+
+/*! Production::    If : IfBlock Else */
+
+/*! Production::    If : Statement POSTIF Expression */
+
+/*! Production::    If : Statement POSTUNLESS Expression */
+
+/*! Production::    IfBlock : IfUnless "(" Expression ")" Expression */
+
+/*! Production::    IfBlock : IfUnless Expression "{" Expression "}" */
+
+/*! Production::    IfBlock : IfUnless Expression Block */
+
+/*! Production::    IfBlock : IfUnless Expression THEN "{" Expression "}" */
+
+/*! Production::    IfBlock : IfUnless Expression THEN "{" Statement "}" */
+
+/*! Production::    IfBlock : IfUnless Expression THEN Block */
+
+/*! Production::    IfBlock : IfUnless Expression THEN Expression */
+
+/*! Production::    IfBlock : IfUnless Expression THEN Statement */
+
+/*! Production::    IfUnless : IF */
+
+/*! Production::    IfUnless : UNLESS */
+
+/*! Production::    Import : IMPORT INDENT OptDefault "*" AS Identifier Import(FROM) STRING OUTDENT */
+
+/*! Production::    Import : IMPORT INDENT OptDefault INDENT ImportList OUTDENT Import(FROM) STRING OUTDENT */
+
+/*! Production::    Import : IMPORT INDENT OptDefault ImportList Import(FROM) STRING OUTDENT */
+
+/*! Production::    Import : IMPORT OptDefault "*" AS Identifier Import(FROM) STRING */
+
+/*! Production::    Import : IMPORT OptDefault INDENT "*" AS Identifier Import(FROM) STRING OUTDENT */
+
+/*! Production::    Import : IMPORT OptDefault INDENT ImportList Import(FROM) STRING OUTDENT */
+
+/*! Production::    Import : IMPORT OptDefault INDENT ImportList OUTDENT Import(FROM) STRING */
+
+/*! Production::    Import : IMPORT OptDefault ImportList Import(FROM) STRING */
+
+/*! Production::    Import(FROM) : FROM */
+
+/*! Production::    ImportList : "{" ImportNames "}" */
+
+/*! Production::    ImportList : "{{" INDENT ImportNames OUTDENT "}}" */
+
+/*! Production::    ImportList : Identifier */
+
+/*! Production::    ImportName : DEFAULT AS Identifier */
+
+/*! Production::    ImportName : Identifier */
+
+/*! Production::    ImportName : Identifier AS Identifier */
+
+/*! Production::    ImportName : PROPERTY ":" */
+
+/*! Production::    ImportName : PROPERTY ":" AS Identifier */
+
+/*! Production::    ImportName : PROPERTY ":" Identifier */
+
+/*! Production::    ImportNames : ImportName */
+
+/*! Production::    ImportNames : ImportNames "," ImportName */
+
+/*! Production::    ImportNames : ImportNames OptComma NEWLINE ImportName */
+
+/*! Production::    Interface : INTERFACE Identifier TypeArguments? INDENT InterfaceBody OUTDENT */
+
+/*! Production::    Interface : INTERFACE Identifier TypeArguments? InterfaceBody */
+
+/*! Production::    InterfaceBody : "{" "}" */
+
+/*! Production::    InterfaceBody : "{" INDENT InterfaceProperties OUTDENT "}" */
+
+/*! Production::    InterfaceBody : "{" InterfaceProperties "}" */
+
+/*! Production::    InterfaceKeyword? : %epsilon */
+
+/*! Production::    InterfaceKeyword? : NEW */
+
+/*! Production::    InterfaceKeyword? : READONLY */
+
+/*! Production::    InterfaceProperties : InterfaceProperties "," InterfaceProperty */
+
+/*! Production::    InterfaceProperties : InterfaceProperties OptComma INDENT InterfaceProperty OUTDENT */
+
+/*! Production::    InterfaceProperties : InterfaceProperties OptComma NEWLINE InterfaceProperty */
+
+/*! Production::    InterfaceProperties : InterfaceProperty */
+
+/*! Production::    InterfaceProperty : InterfaceKeyword? TypeArguments? Identifier? Params ":" TypeSentence */
+
+/*! Production::    InterfaceProperty : PROPERTY ":" TypeSentence */
+
+/*! Production::    InterfaceProperty : READONLY PROPERTY ":" TypeSentence */
+
+/*! Production::    Interpolation : INTERPOLATION_START Expression INTERPOLATION_END */
+
+/*! Production::    Interpolation : String */
+
+/*! Production::    Interpolations : Interpolation */
+
+/*! Production::    Interpolations : Interpolations Interpolation */
+
+/*! Production::    Invocation : "@" SUPER */
+
+/*! Production::    Invocation : SUPER Arguments */
+
+/*! Production::    Invocation : SUPER FUNC_EXISTS Arguments */
+
+/*! Production::    Invocation : Value Arguments */
+
+/*! Production::    Invocation : Value FUNC_EXISTS Arguments */
+
+/*! Production::    Invocation : Value FUNC_EXISTS String */
+
+/*! Production::    Invocation : Value String */
+
+/*! Production::    JointExpression : Expression */
+
+/*! Production::    JointExpression : JointExpression "," Expression */
+
+/*! Production::    Label : Identifier "::" Block */
+
+/*! Production::    Label : Identifier "::" Expression */
+
+/*! Production::    Label : Identifier "::" Statement */
+
+/*! Production::    Line : Expression */
+
+/*! Production::    Line : Statement */
+
+/*! Production::    Literal : AlphaNum */
+
+/*! Production::    Literal : BOOL */
+
+/*! Production::    Literal : INFINITY */
+
+/*! Production::    Literal : NAN */
+
+/*! Production::    Literal : NULL */
+
+/*! Production::    Literal : Regex */
+
+/*! Production::    Literal : UNDEFINED */
+
+/*! Production::    Logical : "&" */
+
+/*! Production::    Logical : "&&" */
+
+/*! Production::    Logical : "??" */
+
+/*! Production::    Logical : "|" */
+
+/*! Production::    Logical : "||" */
+
+/*! Production::    Logical : AND */
+
+/*! Production::    Logical : OR */
+
+/*! Production::    Loop : LOOP Block */
+
+/*! Production::    Loop : LOOP Expression */
+
+/*! Production::    MathPostfix : "++" */
+
+/*! Production::    MathPostfix : "--" */
+
+/*! Production::    MathPrefix : "!" */
+
+/*! Production::    MathPrefix : "+" */
+
+/*! Production::    MathPrefix : "++" */
+
+/*! Production::    MathPrefix : "-" */
+
+/*! Production::    MathPrefix : "--" */
+
+/*! Production::    MathPrefix : "~" */
+
+/*! Production::    MathPrefix : "~~" */
+
+/*! Production::    MathPrefix : NOT */
+
+/*! Production::    Multicheck : MulticheckCombinations MulticheckClauses */
+
+/*! Production::    MulticheckClauses : Clause */
+
+/*! Production::    MulticheckClauses : MulticheckClauses EITHER_OR Clause */
+
+/*! Production::    MulticheckCombinations : IS EITHER */
+
+/*! Production::    MulticheckCombinations : ISNT EITHER */
+
+/*! Production::    Multicondition : EITHER MulticheckClauses */
+
+/*! Production::    New : NEW Expression */
+
+/*! Production::    Object : "{" "}" */
+
+/*! Production::    Object : "{" INDENT PropList OUTDENT "}" */
+
+/*! Production::    Object : "{" PropList OptComma "}" */
+
+/*! Production::    Operation : "@" Value */
+
+/*! Production::    Operation : AWAIT Expression */
+
+/*! Production::    Operation : AWAIT INDENT Expression OUTDENT */
+
+/*! Production::    Operation : DO Expression */
+
+/*! Production::    Operation : Expression CHAIN Block */
+
+/*! Production::    Operation : Expression CHAIN Expression */
+
+/*! Production::    Operation : Expression Compare Expression */
+
+/*! Production::    Operation : Expression EXISTS */
+
+/*! Production::    Operation : Expression INCLUDES Expression */
+
+/*! Production::    Operation : Expression Logical Expression */
+
+/*! Production::    Operation : Expression MATH_BIN Expression */
+
+/*! Production::    Operation : Expression MathPostfix */
+
+/*! Production::    Operation : Expression Multicheck */
+
+/*! Production::    Operation : Expression Operator Expression */
+
+/*! Production::    Operation : Expression SYMBOL_EXISTS */
+
+/*! Production::    Operation : MathPrefix Expression */
+
+/*! Production::    Operation : Multicondition */
+
+/*! Production::    Operation : TYPEOF Expression */
+
+/*! Production::    Operation : WHETHER Expression */
+
+/*! Production::    Operation : YIELD Expression */
+
+/*! Production::    Operation : YIELD INDENT Expression OUTDENT */
+
+/*! Production::    Operator : "%" */
+
+/*! Production::    Operator : "*" */
+
+/*! Production::    Operator : "**" */
+
+/*! Production::    Operator : "+" */
+
+/*! Production::    Operator : "-" */
+
+/*! Production::    Operator : "<<" */
+
+/*! Production::    Operator : ">>" */
+
+/*! Production::    Operator : ">>>" */
+
+/*! Production::    Operator : "^" */
+
+/*! Production::    Operator : DIVISION */
+
+/*! Production::    Operator : PLUS */
+
+/*! Production::    OptComma : "," */
+
+/*! Production::    OptComma : %epsilon */
+
+/*! Production::    OptDefault : %epsilon */
+
+/*! Production::    OptDefault : Identifier "," */
+
+/*! Production::    OptDefault : Identifier OptComma NEWLINE */
+
+/*! Production::    OptVoids : %epsilon */
+
+/*! Production::    OptVoids : Voids */
+
+/*! Production::    Param : ParamAssignable */
+
+/*! Production::    ParamArray : "[" "]" */
+
+/*! Production::    ParamArray : "[" ParamArrayList OptVoids "]" */
+
+/*! Production::    ParamArrayArg : ParamAssignable */
+
+/*! Production::    ParamArrayArg : Voids ParamAssignable */
+
+/*! Production::    ParamArrayList : ParamArrayArg */
+
+/*! Production::    ParamArrayList : ParamArrayList "," ParamArrayArg */
+
+/*! Production::    ParamArrayList : ParamArrayList OptComma NEWLINE ParamArrayArg */
+
+/*! Production::    ParamAssignable : ParamArray */
+
+/*! Production::    ParamAssignable : ParamArray DEFAULTS Expression */
+
+/*! Production::    ParamAssignable : ParamIdentifier */
+
+/*! Production::    ParamAssignable : ParamObject */
+
+/*! Production::    ParamAssignable : ParamObject DEFAULTS Expression */
+
+/*! Production::    ParamIdentifier : "..." IDENTIFIER */
+
+/*! Production::    ParamIdentifier : "..." THIS "." PROPERTY */
+
+/*! Production::    ParamIdentifier : IDENTIFIER "..." */
+
+/*! Production::    ParamIdentifier : IDENTIFIER */
+
+/*! Production::    ParamIdentifier : IDENTIFIER DEFAULTS Expression */
+
+/*! Production::    ParamIdentifier : THIS "." PROPERTY "..." */
+
+/*! Production::    ParamIdentifier : THIS "." PROPERTY */
+
+/*! Production::    ParamIdentifier : THIS "." PROPERTY DEFAULTS Expression */
+
+/*! Production::    ParamList : Param */
+
+/*! Production::    ParamList : ParamList "," Param */
+
+/*! Production::    ParamList : ParamList OptComma INDENT ParamList OptComma OUTDENT */
+
+/*! Production::    ParamList : ParamList OptComma NEWLINE Param */
+
+/*! Production::    ParamObject : "{" "}" */
+
+/*! Production::    ParamObject : "{" ParamPropList "}" */
+
+/*! Production::    ParamPropList : %epsilon */
+
+/*! Production::    ParamPropList : ParamPropList "," ParamPropObj */
+
+/*! Production::    ParamPropList : ParamPropList OptComma INDENT ParamPropObj OUTDENT */
+
+/*! Production::    ParamPropList : ParamPropList OptComma NEWLINE ParamPropObj */
+
+/*! Production::    ParamPropList : ParamPropObj */
+
+/*! Production::    ParamPropObj : "..." PROPERTY ":" */
+
+/*! Production::    ParamPropObj : PROPERTY ":" "..." */
+
+/*! Production::    ParamPropObj : PROPERTY ":" */
+
+/*! Production::    ParamPropObj : PROPERTY ":" DEFAULTS Expression */
+
+/*! Production::    ParamPropObj : PROPERTY ":" ParamAssignable */
+
+/*! Production::    ParamPropObj : ParamIdentifier */
+
+/*! Production::    ParamPropObj : ParamIdentifier DEFAULTS Expression */
+
+/*! Production::    Params : PARAM_START PARAM_END */
+
+/*! Production::    Params : PARAM_START ParamList PARAM_END */
+
+/*! Production::    Parenthetical : "(" Body ")" */
+
+/*! Production::    Parenthetical : "(" Expression ")" */
+
+/*! Production::    Parenthetical : "(" INDENT Body OUTDENT ")" */
+
+/*! Production::    PropList : PropList "," PropObj */
+
+/*! Production::    PropList : PropList OptComma INDENT PropList OUTDENT */
+
+/*! Production::    PropList : PropList OptComma NEWLINE PropObj */
+
+/*! Production::    PropList : PropObj */
+
+/*! Production::    PropObj : "..." PROPERTY ":" */
+
+/*! Production::    PropObj : "..." Value */
+
+/*! Production::    PropObj : "[" Expression "]" ":" Block */
+
+/*! Production::    PropObj : "[" Expression "]" ":" Expression */
+
+/*! Production::    PropObj : "[" Expression "]" ":" INDENT Expression OUTDENT */
+
+/*! Production::    PropObj : AlphaNum ":" Block */
+
+/*! Production::    PropObj : AlphaNum ":" Expression */
+
+/*! Production::    PropObj : AlphaNum ":" INDENT Expression OUTDENT */
+
+/*! Production::    PropObj : Assignment */
+
+/*! Production::    PropObj : Function */
+
+/*! Production::    PropObj : Identifier */
+
+/*! Production::    PropObj : PROPERTY ":" "..." */
+
+/*! Production::    PropObj : PROPERTY ":" */
+
+/*! Production::    PropObj : PROPERTY ":" Block */
+
+/*! Production::    PropObj : PROPERTY ":" Expression */
+
+/*! Production::    PropObj : PROPERTY ":" INDENT Expression OUTDENT */
+
+/*! Production::    PropObj : Value "..." */
+
+/*! Production::    Regex : REGEX */
+
+/*! Production::    Regex : RegexWithInterpolations */
+
+/*! Production::    RegexInterpolation : INTERPOLATION_START Expression INTERPOLATION_END */
+
+/*! Production::    RegexInterpolation : Regex */
+
+/*! Production::    RegexInterpolations : RegexInterpolation */
+
+/*! Production::    RegexInterpolations : RegexInterpolations RegexInterpolation */
+
+/*! Production::    RegexWithInterpolations : REGEX_START RegexInterpolations REGEX_END */
+
+/*! Production::    Return : RETURN */
+
+/*! Production::    Return : RETURN Expression */
+
+/*! Production::    Return : RETURN INDENT Body OUTDENT */
+
+/*! Production::    Return : RETURN INDENT Expression OUTDENT */
+
+/*! Production::    Root : %epsilon */
+
+/*! Production::    Root : Body */
+
+/*! Production::    Statement : BREAK */
+
+/*! Production::    Statement : BREAK Identifier */
+
+/*! Production::    Statement : CONTINUE */
+
+/*! Production::    Statement : CONTINUE Identifier */
+
+/*! Production::    Statement : Declare */
+
+/*! Production::    Statement : Export */
+
+/*! Production::    Statement : Import */
+
+/*! Production::    Statement : Interface */
+
+/*! Production::    Statement : Return */
+
+/*! Production::    Statement : THROW Expression */
+
+/*! Production::    Statement : THROW INDENT Expression OUTDENT */
+
+/*! Production::    Statement : Type */
+
+/*! Production::    String : STRING */
+
+/*! Production::    String : StringWithInterpolations */
+
+/*! Production::    StringWithInterpolations : STRING_START Interpolations STRING_END */
+
+/*! Production::    Super : SUPER "." PROPERTY */
+
+/*! Production::    Super : SUPER INDEX_START PROPERTY INDEX_END */
+
+/*! Production::    Switch : SWITCH "{{" INDENT Cases OUTDENT "}}" */
+
+/*! Production::    Switch : SWITCH Expression "{{" INDENT Cases OUTDENT "}}" */
+
+/*! Production::    Switch : SWITCH Expression INDENT Cases OUTDENT */
+
+/*! Production::    Switch : SWITCH INDENT Cases OUTDENT */
+
+/*! Production::    This : THIS */
+
+/*! Production::    Try : TRY Block */
+
+/*! Production::    Try : TRY Expression */
+
+/*! Production::    TryBlock : Try */
+
+/*! Production::    TryBlock : Try Catch */
+
+/*! Production::    TryBlock : Try Catch Finally */
+
+/*! Production::    Type : TYPE INDENT TypeDeclaration OUTDENT */
+
+/*! Production::    Type : TYPE NEWLINE TypeDeclaration */
+
+/*! Production::    Type : TYPE TypeDeclaration */
+
+/*! Production::    TypeArgument : Identifier */
+
+/*! Production::    TypeArgument : Identifier EXTENDS Identifier */
+
+/*! Production::    TypeArgument : TypeWithArguments */
+
+/*! Production::    TypeArguments : TypeArgument */
+
+/*! Production::    TypeArguments : TypeArguments "," TypeArgument */
+
+/*! Production::    TypeArguments : TypeArguments OptComma INDENT TypeArgument OUTDENT */
+
+/*! Production::    TypeArguments : TypeArguments OptComma NEWLINE TypeArgument */
+
+/*! Production::    TypeArguments? : "<(" INDENT TypeArguments OUTDENT ")>" */
+
+/*! Production::    TypeArguments? : "<(" TypeArguments ")>" */
+
+/*! Production::    TypeArguments? : %epsilon */
+
+/*! Production::    TypeArray : "[" INDENT TypeArrayItems OUTDENT "]" */
+
+/*! Production::    TypeArray : "[" TypeArrayItems "]" */
+
+/*! Production::    TypeArrayItems : TypeArrayItems "," TypeSentence */
+
+/*! Production::    TypeArrayItems : TypeArrayItems OptComma INDENT TypeSentence OUTDENT */
+
+/*! Production::    TypeArrayItems : TypeArrayItems OptComma NEWLINE TypeSentence */
+
+/*! Production::    TypeArrayItems : TypeSentence */
+
+/*! Production::    TypeDeclaration : Identifier TypeArguments? AS INDENT TypeSentence OUTDENT */
+
+/*! Production::    TypeDeclaration : Identifier TypeArguments? AS NEWLINE TypeSentence */
+
+/*! Production::    TypeDeclaration : Identifier TypeArguments? AS TypeSentence */
+
+/*! Production::    TypeObjProp : Identifier */
+
+/*! Production::    TypeObjProp : PROPERTY ":" */
+
+/*! Production::    TypeObjProp : PROPERTY ":" INDENT TypeSentence OUTDENT */
+
+/*! Production::    TypeObjProp : PROPERTY ":" NEWLINE TypeSentence */
+
+/*! Production::    TypeObjProp : PROPERTY ":" TypeSentence */
+
+/*! Production::    TypeObjProps : TypeObjProp */
+
+/*! Production::    TypeObjProps : TypeObjProps "," TypeObjProp */
+
+/*! Production::    TypeObjProps : TypeObjProps OptComma INDENT TypeObjProp OUTDENT */
+
+/*! Production::    TypeObjProps : TypeObjProps OptComma NEWLINE TypeObjProp */
+
+/*! Production::    TypeObject : "{" INDENT TypeObjProps OUTDENT "}" */
+
+/*! Production::    TypeObject : "{" TypeObjProps "}" */
+
+/*! Production::    TypeSentence : TypeSentence "&" INDENT TypeValue OUTDENT */
+
+/*! Production::    TypeSentence : TypeSentence "&" NEWLINE TypeValue */
+
+/*! Production::    TypeSentence : TypeSentence "&" TypeValue */
+
+/*! Production::    TypeSentence : TypeSentence "|" INDENT TypeValue OUTDENT */
+
+/*! Production::    TypeSentence : TypeSentence "|" NEWLINE TypeValue */
+
+/*! Production::    TypeSentence : TypeSentence "|" TypeValue */
+
+/*! Production::    TypeSentence : TypeValue */
+
+/*! Production::    TypeValue : Identifier */
+
+/*! Production::    TypeValue : Literal */
+
+/*! Production::    TypeValue : TAG */
+
+/*! Production::    TypeValue : TypeArray */
+
+/*! Production::    TypeValue : TypeObject */
+
+/*! Production::    TypeValue : TypeWithArguments */
+
+/*! Production::    TypeWithArguments : "(" TypeSentence ")" INDEX_START INDEX_END */
+
+/*! Production::    TypeWithArguments : Identifier "<(" INDENT TypeArguments OUTDENT ")>" */
+
+/*! Production::    TypeWithArguments : Identifier "<(" TypeArguments ")>" */
+
+/*! Production::    TypeWithArguments : TypeValue INDEX_START INDEX_END */
+
+/*! Production::    Value : Assignable */
+
+/*! Production::    Value : Function */
+
+/*! Production::    Value : Invocation */
+
+/*! Production::    Value : Literal */
+
+/*! Production::    Value : New */
+
+/*! Production::    Value : Parenthetical */
+
+/*! Production::    Value : SUCH */
+
+/*! Production::    Value : Super */
+
+/*! Production::    Value : This */
+
+/*! Production::    Voids : "," */
+
+/*! Production::    Voids : "," NEWLINE Voids */
+
+/*! Production::    Voids : "," Voids */
+
+/*! Production::    When : CASE Clause */
+
+/*! Production::    When : IF Clause */
+
+/*! Production::    When : WHEN Clause */
+
+/*! Production::    While : Expression WhileUntil Expression */
+
+/*! Production::    While : Loop NEWLINE WhileUntil Expression */
+
+/*! Production::    While : Loop WhileUntil Expression */
+
+/*! Production::    While : WhileUntil "(" Expression ")" Expression */
+
+/*! Production::    While : WhileUntil Expression Block */
+
+/*! Production::    While : WhileUntil Expression THEN Block */
+
+/*! Production::    While : WhileUntil Expression THEN Expression */
+
+/*! Production::    WhileUntil : POSTUNTIL */
+
+/*! Production::    WhileUntil : POSTWHILE */
+
+/*! Production::    WhileUntil : UNTIL */
+
+/*! Production::    WhileUntil : WHILE */

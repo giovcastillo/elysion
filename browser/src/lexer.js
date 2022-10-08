@@ -57,7 +57,7 @@ class Lexer {
         this.Separator() || this.Whitespace() || this.Comment() || this.String() || this.Regex() || this.Assign() || this.AssignKeyword() || this.ImportExport() || this.KeywordStatement() || this.Type() || this.Number() || this.Literal() || this.Identifier();
 
       if (!consumed) {
-        let msg = "unexpected token " + red(this.chunk[0]);
+        let msg = "unexpected token " + (this.chunk[0]);
         throwSyntaxError({
           message: msg,
           location: { first_line: this.cursor.y, first_column: this.cursor.x, last_column: this.cursor.x + 1, last_line: this.cursor.y, src: '<anonymous>' },
@@ -185,7 +185,7 @@ class Lexer {
       } else this.float = typeToken;
 
       return input.length;
-    } else if ((ref = /^[&|?:]:/.exec(this.chunk)) || (ref = /^:=/.exec(this.chunk)) || (ref = /^:/.exec(this.chunk)) && (this.stage().quotedIf === undefined || !this.stage().quotedIf.length)) {
+    } else if ((ref = /^[&|?:]:/.exec(this.chunk)) || (ref = /^:=/.exec(this.chunk)) || (ref = /^:/.exec(this.chunk)) && (this.stage().quotedIf === undefined || !this.stage().quotedIf.length) && !!this.prev().spaced) {
       let i = ref[0].length - 1, symbols = [], str = ref[0], virtualLoc = { x: this.cursor.x + i, y: this.cursor.y }, offset = 0;
 
       while (++i) {
@@ -210,7 +210,7 @@ class Lexer {
           })[char]
 
           if (symbols.pop() !== closure) {
-            let msg = "unexpected token " + red(char);
+            let msg = "unexpected token " + (char);
             throwSyntaxError({
               message: msg,
               location: { first_line: virtualLoc.y, first_column: virtualLoc.x, last_column: virtualLoc.x + 1, last_line: virtualLoc.y, src: '<anonymous>' },
@@ -223,7 +223,7 @@ class Lexer {
       }
 
       if (symbols.length) {
-        let msg = "unmatched " + red(symbols.pop()) + ` at end of ${!this.chunk[i] ? 'input' : 'line'}`;
+        let msg = "unmatched " + (symbols.pop()) + ` at end of ${!this.chunk[i] ? 'input' : 'line'}`;
 
         throwSyntaxError({
           message: msg,
@@ -440,7 +440,7 @@ class Lexer {
       if (!this.isELSON && ((/\{|\[|\.(\.\.)?/.test(token) || isArrowFunc) && (token === "." && !this.prev()[0] || (["IDENTIFIER", "PROPERTY", "SYMBOL_EXISTS"].includes(this.prev()[0]) && this.prev().spaced && !(/^\s*(\n|;)/.test(this.chunk.slice(token.length)) && this.opLine)) || this.prev()[0] && !["IDENTIFIER", "PROPERTY", "]", "INDEX_END", "STRING_END", "STRING", "REGEX", "REGEX_END", ".", ")", "CALL_END", "}", "THIS", "SUCH", "SUPER", "OUTDENT"].includes(this.prev()[0])))) {
         if (this.prev() && this.prev()[0] && "IDENTIFIER SUCH SUPER PROPERTY ] INDEX_END ) CALL_END } SYMBOL_EXISTS".split(' ').includes(this.prev()[0])) {
           let b;
-          if ((this.prev()[0] === "IDENTIFIER") && (this.inClass) && !(b = this.skipped.slice(-1)[0] === this.indentLevel)) {
+          if ((this.prev()[0] === "IDENTIFIER") && (this.inClass()) && !(b = this.skipped.slice(-1)[0] === this.indentLevel)) {
             this.token(
               'PARAM_START',
               '(',
@@ -1072,7 +1072,7 @@ class Lexer {
             let brace = this.tokens.slice(-2)[0];
             let stageId = this.tokens.slice(-2)[0].stageId;
             this.tokens.splice(this.tokens.length - 2, 2);
-            this.tokens.push(this._token('NEWLINE', 0, { inImplicitObj: true, generated: true }), prev);
+            this.tokens.push(this._token('NEWLINE', 0, { inImplicitObj: true }), prev);
             this.storeAt(stageId, ['object', brace ? brace.pair : this.position])
           } else {
             let prevs = [prev];
@@ -1338,7 +1338,7 @@ class Lexer {
         this.token('!', '!', { origin: 'case' });
       }
 
-      if ((token == "if") || (token == "switch") || (token == "case") || (token == "when") || (token == "while") || (token == "class") || (token == "with") || (token == "within") || (token == "function") || (token == "else") || (token == "otherwise") || (token == "return") || (token == "unless") || (token == "until") || (token == "loop") || (token == "for") || (token == "try") || (token == "catch") || (token == "async") || (token == "finally") || ((!this.inClass) && /[gs]et/.test(token))) {
+      if ((token == "if") || (token == "switch") || (token == "case") || (token == "when") || (token == "while") || (token == "class") || (token == "with") || (token == "within") || (token == "function") || (token == "else") || (token == "otherwise") || (token == "return") || (token == "unless") || (token == "until") || (token == "loop") || (token == "for") || (token == "try") || (token == "catch") || (token == "async") || (token == "finally") || ((!this.inClass()) && /[gs]et/.test(token))) {
         if (!this.opLine) {
           // What do we know?
           if (!/[gs]et/.test(token)) {
@@ -1658,7 +1658,7 @@ class Lexer {
               this.explicit[this.explicit.length - 1][0] = "}}";
               this.prev()[0] = "{{";
             } else if ("IDENTIFIER SUCH SUPER PROPERTY ] INDEX_END CALL_END ) } SYMBOL_EXISTS".split(' ').includes(this.prev()[0]) && !this.actExp && !inAssignChain && !this.stage().typeKwd) {
-              if (!this.inClass || !((this.prev()[0] === "IDENTIFIER"))) {
+              if (!this.inClass() || this.prev()[0] !== "IDENTIFIER") {
                 if (this.prev()[0] === "SYMBOL_EXISTS") {
                   this.prev()[0] = "FUNC_EXISTS";
                 }
@@ -2018,6 +2018,7 @@ class Lexer {
       first_line: this.cursor.y,
       last_column: generated ? this.cursor.x : '?',
       last_line: generated ? this.cursor.y : this.cursor.y + (typeof value === "string" ? (value !== "\n" ? value.split(/\n/) : value.repeat(2)).length - 1 : 1),
+      indented: (this.prev()[2] || {}).indent,
       ...info
     }
 
@@ -2117,8 +2118,8 @@ class Lexer {
       })[explicit];
       explicit = ({ CALL_END: ")", INDEX_END: ")", ")>": ">" })[explicit] || explicit;
       throwSyntaxError({
-        message: `Missing ${explicit}`,
-        location: this.tokens.find(t => t.pair === data[2] && t[1] === matching)[2]
+        message: `Missing "${explicit}" for this token`,
+        location: this.tokens.find(t => t.pair === data[2] && t[0] === matching)[2]
       });
     }
 

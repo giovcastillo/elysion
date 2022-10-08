@@ -1,9 +1,3 @@
-/**
- * Goals:
- *  [ ] Implicit string quotation for symbols
- *  [x] Implicit () and {}, and [] if possible (I don't think so) (edit: it was possible!!!!)
- *  [ ] Helpers for Array, Object and String
- */
 const { Parser, Nodes } = require('./lib/parser'),
   Lexer = require('./lib/lexer');
 
@@ -49,6 +43,7 @@ for (var i = 0, keys = Object.keys(Nodes); i < keys.length; i++) {
 
 parser.yy.parseError = function (message, holder, JisonErr) {
   let token = holder.parser.errorToken, symbol = token[0];
+  console.log(holder.expected)
   
   if (symbol === "INDENT") {
     token[2].first_line++;
@@ -72,7 +67,16 @@ parser.yy.parseError = function (message, holder, JisonErr) {
   throw err;
 }
 
+/**
+ * The compiler
+ */
 class Elysion {
+  /**
+   * Compile a string
+   * @param {string} script 
+   * @param {object} options
+   * @returns {object}
+   */
   constructor(script, options) {
     return Elysion.compile(script, options);
   }
@@ -231,3 +235,7 @@ function resolveToken(token) {
 }
 
 module.exports = Elysion;
+
+var tried = {
+  log: 'asdljkasd'
+}

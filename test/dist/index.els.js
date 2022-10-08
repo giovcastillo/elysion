@@ -1,8 +1,1 @@
-/**
- * @type {string}
- */
-let hello;
-
-hello = 'bitches';
-
-hello = 1;
+a(b);

@@ -7,11 +7,11 @@
     "lib": "lib"
   },
   "scripts": {
-    "build": "babel browser/dist/browser.js -d lib",
+    "build": "babel browser/dist/browser.js -d lib & npx webpack-cli --config webpack.config.js",
     "generate": "node ./lib/generate"
   },
   "bin": {
-    "els": "./bin/index.js"
+    "xels": "./bin/index.js"
   },
   "keywords": [],
   "author": {

@@ -2,3 +2,5 @@ node_modules
 .vscode
 .upm
 package-lock.json
+.elsconfig
+test

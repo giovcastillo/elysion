@@ -9,7 +9,7 @@ let u = function (group, rules) {
             rule,
             "$$ = " + (function () {
                 let _len = rule.split(" ").length,
-                    actionDefault = `new yy["${group}"]("${rule}", ...[$1]).setLocation({ first_line: @1.first_line, first_column: @1.first_column, last_line: @${_len}.last_line, last_column: @${_len}.last_column, src: @1.src, type: @1.type })`;
+                    actionDefault = _len > 0 ? `new yy["${group}"]("${rule}", ...[$1]).setLocation({ first_line: @1.first_line, first_column: @1.first_column, last_line: @${_len}.last_line, last_column: @${_len}.last_column, src: @1.src, type: @1.type })` : 'undefined';
 
                 if (!actions.length) {
                     return actions = [actionDefault];

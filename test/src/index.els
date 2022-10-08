@@ -1,3 +1,1 @@
-hello : string = 'bitches'
-
-hello = 1
+a( b)
