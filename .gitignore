@@ -4,3 +4,5 @@ node_modules
 package-lock.json
 .elsconfig
 test
+browser/browser.js
+browser/dist
