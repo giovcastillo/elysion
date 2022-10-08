@@ -43,8 +43,6 @@ for (var i = 0, keys = Object.keys(Nodes); i < keys.length; i++) {
 
 parser.yy.parseError = function (message, holder, JisonErr) {
   let token = holder.parser.errorToken, symbol = token[0];
-  console.log(holder.expected)
-  
   if (symbol === "INDENT") {
     token[2].first_line++;
     token[2].first_column = 1;

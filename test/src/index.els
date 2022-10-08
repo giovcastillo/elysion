@@ -1,1 +1,2 @@
-a( b)
+for a, b from d
+  hello
