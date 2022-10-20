@@ -13,12 +13,13 @@ class Parser {
     this.wrapSafe = options.wrapSafe;
     this.tsCheck = options.tsCheck;
     this.omitTypeScript = options.omitTypeScript;
+    this.isRecomp = options.isRecomp;
   }
 
   parse({ scope }) {
     let sources, js, registry;
     sources = new Sources();
-    registry = { sources: this.sourceMaps ? sources : undefined, scope: ['Root'], useVar: this.useVar, isELSON: this.isELSON, omitTypeScript: this.omitTypeScript };
+    registry = { sources: this.sourceMaps ? sources : undefined, scope: ['Root'], useVar: this.useVar, isELSON: this.isELSON, omitTypeScript: this.omitTypeScript, isRecomp: this.isRecomp };
     js = this.nodes.parse({ comments: this.comments, registry, wrapSafe: this.wrapSafe, scope, tsCheck: this.tsCheck });
     return { js, sources, isTypeScript: registry.isTypeScript };
   }
@@ -690,7 +691,7 @@ Nodes.Body = class Body extends Base {
       if (vars.length) {
         let _vars = vars.sort((a, b) => b.length - a.length).sort((a, b) => +(a.startsWith('_')) - +(b.startsWith('_'))).filter((t, i, r) => r.indexOf(t) === i);
 
-        let dTypes = vars.__data && vars.__data.filter(d => _vars.includes(d.ID)), ddef = "";
+        let dTypes = vars.__data && vars.__data.filter(d => _vars.includes(d.ID)) || [], ddef = "";
         if (dTypes.length && !registry.omitTypeScript) {
           registry.isTypeScript = true;
           let rewrite = [];
@@ -725,9 +726,11 @@ Nodes.Body = class Body extends Base {
 }
 
 Nodes.Class = class Class extends Base {
-  parse({ that, $such, scope, vars, varExistent, constants, prevLine, isValue, tabs = 0, lineReturns, addSemicolon, comments = [], lastNodeLocation, registry = {} } = {}) {
-    let output = "", className, classExtends, puppet;
+  parse({ that, $such, scope, vars = [], varExistent, constants, prevLine, isValue, tabs = 0, lineReturns, addSemicolon, comments = [], lastNodeLocation, registry = {} } = {}) {
+    let output = "", className, classExtends, classAugment, puppet;
     let { contents: Class, rule } = this;
+    classAugment = Class[3];
+
     if (Class[0]) {
       className = Class[0].parse ? Class[0].parse({ registry }).toString() : Class[0];
     } else {
@@ -761,6 +764,55 @@ Nodes.Class = class Class extends Base {
 
     let header = "class " + className;
     if (classExtends) header += " extends " + classExtends;
+
+    if (Body.length && classAugment && !registry.isRecomp) {
+      let ctor, hasToString;
+      for (let [func] of Body.contents) {
+        let synt = func.unwrapUntil(x => x instanceof Nodes.Function);
+        if (synt) {
+          let funcName = synt.unwrap[0][0] ? synt.unwrap[0][0][1] : null;
+          if ([null, "constructor"].includes(funcName) && !ctor) {
+            ctor = synt;
+          }
+
+          if (funcName === "toString") {
+            hasToString = true;
+          }
+        }
+      }
+
+      if (ctor && !hasToString) {
+        // console.log(`Augmenting class '${className}'...`);
+        let ins = getInsertedParams(ctor).map(p => p[0]), refVals, valArg,
+          nom = Class[0].parse ? Class[0].parse({ registry: {} }).toString() : Class[0];
+        if (ins.length) {
+          refVals = Reference(scope, true, 'vals');
+          valArg = Reference(scope, true, 'val');
+        }
+        Body.unwrap.push(
+          new Nodes.Line("Expression", 
+            new Nodes.Expression('Value',
+              new Nodes.Value("Function", 
+                new Nodes.Function(
+                  "FuncHeader",
+                  [
+                    new Nodes.Identifier('null', 'toString').setLoc(Class.loc)
+                  ],
+                  new Nodes.Body(null, [
+                    new Nodes.Line("SimpleCode", [
+                      `${
+                        ins.length ? 
+                          `${registry.useVar ? 'var' : 'let'} ${refVals} = ["${ins.join('", "')}"].map(${valArg} => \`\${${valArg}}=\${this[${valArg}]}\`);\n${tab(tabs + 2 + (!!ForeignExps.length))}`:''
+                      }return \`${nom}(${ins.length ? '${' + refVals + '.join(", ")}':''})\`;`
+                    ])
+                  ]).setLoc(Class.loc)
+                ).setLoc(Class.loc)
+              ).setLoc(Class.loc)
+            ).setLoc(Class.loc)
+          ).setLoc(Class.loc)
+        )
+      }
+    }
 
     if (!ForeignExps.length) {
       if (Body instanceof Nodes.Body) {
@@ -856,7 +908,6 @@ Nodes.Else = class Else extends Base {
 Nodes.Expression = class Expression extends Base {
   parse({ lineReturns = false, addSemicolon = [], construct = false, constants = [], vars = [], varExistent = [], that = [], $such = [], scope = [], isValue = false, isInvoked = false, isOperation = false, isLine = false, prevLine = [], tabs = 0, isCondition = false, isDirect = false, isClass = false, isCompare = false, isAssignment = false, isAssigned = false, ID = [], isParam = false, nl, func = false, scopedParams = Object.assign([], { generated: true }), comments = [], afterParse, metaComments = [], lastNodeLocation = { first_line: 0, first_column: 0, last_line: 0, last_column: 0 }, registry = {}, isUnless = false, FiresSuper = [], FiresAwait = [], FiresYield = [], assignRes = false, isStatement = false, constant = false, FiresSoak, isNarrow = false, isObjProperty, metaQueue, isParenthetical } = {}) {
     if (isParenthetical) isValue = true;
-    
     var [rule, Exp] = this;
     let output = "", block, wrap, inverse;
     if (Exp[0] == "Expression") Exp = Exp[1];
@@ -1035,7 +1086,7 @@ Nodes.Expression = class Expression extends Base {
           }
         }
 
-        if (Insert.length) {
+        if (Insert.length && !registry.isRecomp) {
           if (isInline) {
             Body = new Nodes.Block(null, Nodes.Block.wrap(Body));
             isInline = false;
@@ -1252,6 +1303,21 @@ Nodes.ForExpression = class ForExpression extends Base {
   }
 }
 
+function getInsertedParams(Func) {
+  let Value = Func.contents;
+  let Header = Value[0], [,FuncParams] = Header || [];
+
+  let Params = [], ParsedParams = [], Insert = [], lastNode, typeData = [];
+  if (FuncParams && (FuncParams[1] instanceof Nodes.ParamList)) {
+    for (let Parameter of FuncParams[1].contents) {
+      lastNode = Parameter.loc;
+      ParsedParams.push(ParseParam(Parameter.unwrap, { scope: [], vars: [], varExistent: [], tabs: 1, constants: [], $such: [], that: [], Insert, Params, comments: [], lastNodeLocation: Func.loc, registry: {}, isParam: true, typeData }));
+    }
+  }
+
+  return Insert;
+}
+
 Nodes.Function = class Function extends Base {
   parse({ that, $such, scope, vars, varExistent, constants, prevLine, isValue, tabs, func, scopedParams, comments, lastNodeLocation, registry = {}, FiresSuper, isInvoked, isParam, isClass, isObject, lineReturns, isExport, isLine, metaComments = [], metaQueue }) {
     let { loc, rule } = this;
@@ -1348,11 +1414,11 @@ Nodes.Function = class Function extends Base {
     if (FuncParams && (FuncParams[1] instanceof Nodes.ParamList)) {
       for (let Parameter of FuncParams[1].contents) {
         lastNode = Parameter.loc;
-        ParsedParams.push(ParseParam(Parameter.unwrap, { scope, vars, varExistent, tabs, constants, $such, that, varExistent: vars, varExistent, Insert, Params, comments: childComments, lastNodeLocation, registry, isParam: true, typeData }));
+        ParsedParams.push(ParseParam(Parameter.unwrap, { scope, vars, varExistent, tabs, constants, $such, that, Insert, Params, comments: childComments, lastNodeLocation, registry, isParam: true, typeData }));
       }
     }
 
-    if (Insert.length) {
+    if (Insert.length && !registry.isRecomp) {
       if (Value[1] instanceof Nodes.Expression) {
         Value[1] = new Nodes.Block(null, Nodes.Block.wrap(Value[1]));
       }
@@ -1369,7 +1435,7 @@ Nodes.Function = class Function extends Base {
           return true;
         }
       });
-
+      
       Lines.splice(index, 0, ...(Insert.map((ins, i) => {
         return new Nodes.Line("SimpleCode", [
           `${(that && that[0]) || "this"}.${ins[0]} = ${ins[1]};`
@@ -1636,6 +1702,7 @@ Nodes.Invocation = class Invocation extends Base {
 
     let vRule = Value.rule, vLoc = Value.loc;
     let Soaks = [];
+
 
     Value = Value === "super" ? scopedParams && scopedParams.Supers ? `${Value}.${scopedParams.Supers}` : Value : Value.parse({ that, $such, scope, vars, varExistent, constants, prevLine, isInvoked: true, tabs, lineReturns, func, scopedParams, comments, lastNodeLocation, registry, FiresSoak: Soaks });
 
@@ -2171,6 +2238,7 @@ Nodes.Operation = class Operation extends Base {
         }
 
         output += ParsedClauses.join(isUnless ? ' && ' : ' || ');
+        break;
       };
       case "Expression CHAIN Expression":
       case "Expression CHAIN Block": {

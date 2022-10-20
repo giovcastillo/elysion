@@ -9,7 +9,7 @@ let u = function (group, rules) {
             rule,
             "$$ = " + (function () {
                 let _len = rule.split(" ").length,
-                    actionDefault = _len > 0 ? `new yy["${group}"]("${rule}", ...[$1]).setLocation({ first_line: @1.first_line, first_column: @1.first_column, last_line: @${_len}.last_line, last_column: @${_len}.last_column, src: @1.src, type: @1.type })` : 'undefined';
+                    actionDefault = _len > 0 ? `new yy["${group}"]("${rule}", ...[$1]).setLocation({ first_line: @1.first_line, first_column: @1.first_column, last_line: @${_len}.last_line, last_column: @${_len}.last_column, src: @1.src, type: @1.type })` : `undefined`;
 
                 if (!actions.length) {
                     return actions = [actionDefault];
@@ -36,7 +36,7 @@ let u = function (group, rules) {
                     typeof action === "function" ?
                         action.toString().replace(/new /g, 'new yy.').replace(/Block\.wrap\(/g, 'yy.Block.wrap(').replace(/function\s*\(\)\s*\{\s*(?:return)?(.*)\s*\}|\(\)\s*=>\s*\{?\s*(?:return)?(.*)\s*\}?/i, "$1").trim()
                         :
-                        `Object.assign(new yy["${group}"]("${rule}", ...[${action}]), { rule: "${rule}", loc: { first_line: @${options.first}.first_line, first_column: @${options.first}.first_column, last_line: @${options.last}.last_line, last_column: @${options.last}.last_column, src: @${options.first}.src${(options.typeOf === undefined || options.typeOf !== 0) ? `, type: @${options.typeOf || '1'}.type`:''} } }, ${options ? JSON.stringify(Object.assign(options)) : "{}"}, { generated: ${options.checkGenerated ? `@${options.checkGenerated}.generated` : `undefined`} })`
+                        `Object.assign(new yy["${group}"]("${rule}", ...[${action}]), { rule: "${rule}", loc: { first_line: @${options.first}.first_line, first_column: @${options.first}.first_column, last_line: @${options.last}.last_line, last_column: @${options.last}.last_column, src: @${options.first}.src${(options.typeOf === undefined || options.typeOf !== 0) ? `, type: @${options.typeOf || '1'}.type`:''} } }, ${options ? JSON.stringify(Object.assign(options)) : "{}"}, { generated: ${options.checkGenerated ? `@${options.checkGenerated}.generated` : `undefined`}${options.indentOf !== undefined ? `, indented: @${options.indentOf}.indented` : ``} })`
                 );
                 return actions
             })().join(' && '),
@@ -241,17 +241,17 @@ u(`OptComma`, [
 ]);
 
 u(`Class`, [
-    [`CLASS Identifier`, `$2, false, false`],
-    [`CLASS Identifier Block`, `$2, false, $3[1]`],
-    [`CLASS Identifier THEN Block`, `$2, false, $4[1]`],
-    [`CLASS Block`, `undefined, false, $2[1]`],
-    [`CLASS THEN Block`, `undefined, false, $3[1]`],
-    [`CLASS Identifier EXTENDS Value Block`, `$2, $4, $5[1]`],
-    [`CLASS Identifier EXTENDS Value THEN Block`, `$2, $4, $6[1]`],
-    [`CLASS EXTENDS Value Block`, `undefined, $3, $4[1]`],
-    [`CLASS Identifier EXTENDS Value`, `$2, $4,false`],
-    [`CLASS EXTENDS Value`, `undefined, $3,false`],
-    [`CLASS EXTENDS Value THEN Block`, `undefined, $3, $5[1]`]
+    [`CLASS Identifier`, `$2, false, false, @1.origin === "class*"`],
+    [`CLASS Identifier Block`, `$2, false, $3[1], @1.origin === "class*"`],
+    [`CLASS Identifier THEN Block`, `$2, false, $4[1], @1.origin === "class*"`],
+    [`CLASS Block`, `undefined, false, $2[1], @1.origin === "class*"`],
+    [`CLASS THEN Block`, `undefined, false, $3[1], @1.origin === "class*"`],
+    [`CLASS Identifier EXTENDS Value Block`, `$2, $4, $5[1], @1.origin === "class*"`],
+    [`CLASS Identifier EXTENDS Value THEN Block`, `$2, $4, $6[1], @1.origin === "class*"`],
+    [`CLASS EXTENDS Value Block`, `undefined, $3, $4[1], @1.origin === "class*"`],
+    [`CLASS Identifier EXTENDS Value`, `$2, $4,false, @1.origin === "class*"`],
+    [`CLASS EXTENDS Value`, `undefined, $3,false, @1.origin === "class*"`],
+    [`CLASS EXTENDS Value THEN Block`, `undefined, $3, $5[1], @1.origin === "class*"`]
 ]);
 
 u(`Block`, [
@@ -291,18 +291,18 @@ u(`For`, [
     [`FOR ForAssignable FOR_OF Expression THEN Expression`, `[$2[1], $3, $4], yy.Block.wrap($6), $2[2]`],
     [`FOR ForAssignable FOR_IN Expression THEN Expression`, `[$2[1], $3, $4], yy.Block.wrap($6), $2[2]`],
 
-    [`Expression POSTFOR ForAssignable FOR_OF Expression`, `[$3[1], $4, $5], yy.Block.wrap($1), $3[2]`],
-    [`Expression POSTFOR ForAssignable FOR_IN Expression`, `[$3[1], $4, $5], yy.Block.wrap($1), $3[2]`],
-
     [`FOR Identifier , Assignable ForAny Expression THEN Expression`, `[[$2, $4], $5, $6], yy.Block.wrap($8)`],
     [`FOR Identifier , Assignable ForAny Expression THEN Block`, `[[$2, $4], $5, $6], $8`],
     [`FOR Identifier , Assignable ForAny Expression Block`, `[[$2, $4], $5, $6], $7`],
-    [`Expression POSTFOR Identifier , Assignable ForAny Expression`, `[[$3, $5], $6, $7], yy.Block.wrap($1)`],
 
     [`FOR DeclarationKeyword Identifier , Assignable ForAny Expression THEN Expression`, `[[$3, $5], $6, $7], yy.Block.wrap($9), $2`],
     [`FOR DeclarationKeyword Identifier , Assignable ForAny Expression THEN Block`, `[[$3, $5], $6, $7], $8, $2`],
     [`FOR DeclarationKeyword Identifier , Assignable ForAny Expression Block`, `[[$3, $5], $6, $7], $8, $2`],
-    [`Expression POSTFOR DeclarationKeyword Identifier , Assignable ForAny Expression`, `[[$4, $6], $7, $8], yy.Block.wrap($1), $3`]
+
+    [`Expression POSTFOR DeclarationKeyword Identifier , Assignable ForAny Expression`, `[[$4, $6], $7, $8], yy.Block.wrap($1), $3`],
+    [`Expression POSTFOR ForAssignable FOR_OF Expression`, `[$3[1], $4, $5], yy.Block.wrap($1), $3[2]`],
+    [`Expression POSTFOR ForAssignable FOR_IN Expression`, `[$3[1], $4, $5], yy.Block.wrap($1), $3[2]`],
+    [`Expression POSTFOR Identifier , Assignable ForAny Expression`, `[[$3, $5], $6, $7], yy.Block.wrap($1)`]
 ]);
 
 u(`ForAssignable`, [
@@ -406,7 +406,9 @@ u(`While`, [
 
 u(`WhileUntil`, [
     [`WHILE`],
-    [`UNTIL`]
+    [`UNTIL`],
+    ['POSTWHILE'],
+    ['POSTUNTIL']
 ])
 
 u(`Loop`, [
@@ -489,7 +491,7 @@ u(`ParamObject`, [
 
 u(`Object`, [
     [`{ }`, `[]`],
-    [`{ PropList OptComma }`, `$2`],
+    [`{ PropList OptComma }`, `$2`, { indentOf: 1 }],
     [`{ INDENT PropList OUTDENT }`, `$3`, { indented: true }]
 ]);
 
@@ -841,7 +843,7 @@ u(`TypeValue`, [
     ['TypeWithArguments']
 ])
 
-u('TypeWithArguments', [ // or just type[], i'm silly
+u('TypeWithArguments', [
     ['( TypeSentence ) INDEX_START INDEX_END', '{ isArray: true, type: $2 }'],
     ['TypeValue INDEX_START INDEX_END', '{ isArray: true, type: $1 }'],
     ['Identifier <( TypeArguments )>', '{ type: $1, arguments: $3 }'],

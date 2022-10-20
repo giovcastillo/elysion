@@ -154,7 +154,7 @@ class Elysion {
       if (isTypeScript) {
         let compileTS = {
           parse() {
-            return Elysion.compile(null, { ...options, omitTypeScript: true }, { nodes, tokens, comments, names });
+            return Elysion.compile(null, { ...options, omitTypeScript: true, isRecomp: true }, { nodes, tokens, comments, names });
           }
         }
 

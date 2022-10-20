@@ -3,6 +3,5 @@ node_modules
 .upm
 package-lock.json
 .elsconfig
-test
 browser/browser.js
 browser/dist
