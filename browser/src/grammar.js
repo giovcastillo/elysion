@@ -606,7 +606,9 @@ u(`Function`, [
     [`WITH Block`, `[], $2.unwrap, {}`],
     [`WITH <( TypeArguments )> Block`, `[], $5.unwrap, { arguments: $3 }`],
     [`WITH <( TypeArguments )> THEN Block`, `[], $6.unwrap, { arguments: $3, returns: [@5.type].filter(Boolean) }`],
-    [`FUNC_DIRECTIVE Block`, `[], $2.unwrap`]
+    [`FUNC_DIRECTIVE Block`, `[], $2.unwrap`],
+    [`Identifier TypeArguments? Params FUNC_DIRECTIVE Expression`, `[$1, $3], yy.Block.wrap($5).setLoc(@5), { arguments: $2.unwrap }`],
+    [`Identifier TypeArguments? Params FUNC_DIRECTIVE Block`, `[$1, $3], $5.unwrap, { arguments: $2.unwrap }`]
 ]);
 
 u(`FuncBody`, [

@@ -389,7 +389,7 @@ class Lexer {
       reg = /^(\[|\{|\}|\]|:|,|-?>|=>?|[*-])/;
       isColon = /^(:|=>?|-?>)/.test(this.chunk);
     } else {
-      reg = /^([=!]==|=[<>=]|->|([+-/%!^]|[<>*&|]{1,2})=|[*<>]{1,2}|\|{1,2}|&{1,2}|;|:{1,3}|\.\.\.|\??\.|\?{1,2}|@|\,|\-{1,2}|\+{1,2}|\^|\/|\[|\]|\{|\}|\(|\)|\!|~)/;
+      reg = /^([=!]==|=[<>=]|->|([+-/%!^]|[<>*&|]{1,2})=|[*<>]{1,2}|\|{1,2}|&{1,2}|;|:{1,3}|\.\.\.|\??\.|\?{1,2}|@|\,|\-{1,2}|\+{1,2}|\^|\/|\[|\]|\{|\}|\(|\)|\!|~|=)/;
     }
 
     if (ref = reg.exec(this.chunk)) {
@@ -428,7 +428,7 @@ class Lexer {
             new Lexer(this.chunk, {
               cb: (res, i) => {
                 if ((i > 0) && !res.explicit.length) {
-                  isArrowFunc = /^\s*[-=]>/.test(res.chunk);
+                  isArrowFunc = /^\s*([-=]>|=)/.test(res.chunk);
                   return true;
                 }
               }
@@ -765,7 +765,7 @@ class Lexer {
         origin = "/";
       }
 
-      if (/[-=]>/.test(token)) {
+      if (/^([-=]>|=)$/.test(token)) {
         switch (this.prev()[0]) {
           case "]":
           case "}": {
@@ -787,7 +787,7 @@ class Lexer {
           };
           default: {
             let x;
-            if ("THIS . PROPERTY" === this.tokens.slice(-3).map(i => i[0]).join(" ")) {
+            if ("THIS . PROPERTY" === this.tokens.slice(-3).map(i => i[0]).join(" ") && this.tokens.slice(-3)[0].generated) {
               x = 3;
             } else if (this.prev()[0] === "IDENTIFIER") {
               x = 1
@@ -798,11 +798,18 @@ class Lexer {
               this.token('PARAM_END', ')', { generated: true });
             } else {
               if (this.prev()[0] !== "PARAM_END") {
-                if (this.isPossibleArray()) {
+                if (this.uncontinuous.includes(this.prev()[0]) && this.isPossibleArray()) {
                   this.createImplicitArray();
                 }
 
-                if (![":", "AS", "FROM", "AT", "RETURN", "YIELD", "ASYNC", "AWAIT"].includes(this.prev()[0])) this.token('NEWLINE', 0, { generated: true })
+                if (![":", "AS", "FROM", "AT", "RETURN", "YIELD", "ASYNC", "AWAIT"].includes(this.prev()[0])) {
+                  if (!['NEWLINE', 'INDENT', 'CALL_START', 'INDEX_START', '[', '{'].includes(this.prev()[0])) {
+                    this.token('NEWLINE', 0, { generated: true });
+                  }
+
+                  this.token('PARAM_START', '(', { generated: true });
+                  this.token('PARAM_END', ')', { generated: true });
+                }
               }
             }
 
@@ -1168,9 +1175,9 @@ class Lexer {
   KeywordStatement() {
     // every keyword below, either as JavaScript's or Soles' ones, have their own tag
     // since Soles is literal-like script, we reserve a bunch of keywords
-    let reg = this.isELSON ? /^(true|false|yes|no|null|nil|undefined)(:)?/ : /^(=|as|and|or|plus|includes|has|function\*?|[gs]et|static|i[fn]|of|or|not|true|false|undefined|nil|null|new|delete|return|void|yield|await|async|either|do|with(?:in)?|whil(?:e|st)|for|whe(?:n|ther)|unless|until|else|loop|has|try|catch|finally|otherwise|then|exists|class(?:\*)?|extends|typeof|instanceof|is not|is(?:nt)?|defaults?|continue|break|switch|case|when|on|throw)(:)?(?!(?:[^\x00-\x7F]|[a-z$_])(?:[^\x00-\x7F]|[a-z$_\d])*)/;
-
-    if (reg.test(this.chunk) || !this.isELSON && ((reg = /^(@)\s*/).test(this.chunk) || (reg = /^(with(?:in)?(?=[([{<]))/).test(this.chunk))) {
+    let reg = this.isELSON ? /^(true|false|yes|no|null|nil|undefined)(:)?/ : /^(as|and|or|plus|includes|has|function\*?|[gs]et|static|i[fn]|of|or|not|true|false|undefined|nil|null|new|delete|return|void|yield|await|async|either|do|with(?:in)?|whil(?:e|st)|for|whe(?:n|ther)|unless|until|else|loop|has|try|catch|finally|otherwise|then|exists|class(?:\*)?|extends|typeof|instanceof|is not|is(?:nt)?|defaults?|continue|break|switch|case|when|on|throw)(:)?(?!(?:[^\x00-\x7F]|[a-zA-Z$_])(?:[^\x00-\x7F]|[a-zA-Z$_\d])*)/;
+    
+    if (reg.test(this.chunk) || !this.isELSON && ((reg = /^(@)\s*/).test(this.chunk) || (reg = /^(with(?:in)?(?=[([{<]))/).test(this.chunk)) || (reg = /^(=(?!>))/).test(this.chunk)) {
       let output = true,
         input, [, token, colon] = reg.exec(this.chunk),
         origin;
@@ -1200,6 +1207,9 @@ class Lexer {
         token = "function";
         origin = "function*";
       }
+      
+      if (token === "=" && this.prev()[0] === "PARAM_END") return;
+
       if ((token === "default" && !(this.inSwitch() && (this.portLine !== this.cursor.y) && this.prev()[0] === "NEWLINE")) || (token === "=") || (token === "as")) {
         this.rmNL();
         origin = token; token = "defaults";
@@ -1420,9 +1430,13 @@ class Lexer {
   }
 
   Assign() {
-    let reg = /^(at|from|as|=)(:)?\s/;
+    let reg = /^((?:at|from|as)(:)?\s|=)/;
     if (reg.test(this.chunk)) {
       let [, token, colon] = reg.exec(this.chunk), len = token.length, origin;
+
+      if (token === "=" && this.prev()[0] === "PARAM_END") {
+        return;
+      }
 
       if ((token == "=") || (token == "as")) {
         if (this.paramLine) {
@@ -2096,10 +2110,10 @@ class Lexer {
     return token;
   }
 
-  createImplicitArray(inclusive) {
+  createImplicitArray(inclusive, dotted) {
     let x, z;
     let i = this.tokens.map(i => i).reverse().findIndex((token) => {
-      if (((token[0] === "NEWLINE") || token.$$accept) && token.lvl === this.indentLevel) {
+      if (((token[0] === "NEWLINE") || token.$$accept || ["AS", ":"].includes(token[0]) && dotted) && token.lvl === this.indentLevel) {
         if (token[0] === "NEWLINE") {
           if (token.isNext2GenObj && token.comma && !token.inImplicitObj) return;
           if (token.inImplicitObj) return;

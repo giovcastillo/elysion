@@ -440,6 +440,10 @@
 
 /*! Production::    Function : FuncSpecifiers FuncHeader FuncBody */
 
+/*! Production::    Function : Identifier TypeArguments? Params FUNC_DIRECTIVE Block */
+
+/*! Production::    Function : Identifier TypeArguments? Params FUNC_DIRECTIVE Expression */
+
 /*! Production::    Function : WITH "<(" TypeArguments ")>" Block */
 
 /*! Production::    Function : WITH "<(" TypeArguments ")>" THEN Block */

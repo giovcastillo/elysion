@@ -1,3 +1,3 @@
-function letters(string) {
-  return [...string];
-}
+function _fn(b) {
+  return print(b)
+};
