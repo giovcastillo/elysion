@@ -440,7 +440,7 @@ class Lexer {
       if (!this.isELSON && ((/\{|\[|\.(\.\.)?/.test(token) || isArrowFunc) && (token === "." && !this.prev()[0] || (["IDENTIFIER", "PROPERTY", "SYMBOL_EXISTS"].includes(this.prev()[0]) && this.prev().spaced && !(/^\s*(\n|;)/.test(this.chunk.slice(token.length)) && this.opLine)) || this.prev()[0] && !["IDENTIFIER", "PROPERTY", "]", "INDEX_END", "STRING_END", "STRING", "REGEX", "REGEX_END", ".", ")", "CALL_END", "}", "THIS", "SUCH", "SUPER", "OUTDENT"].includes(this.prev()[0])))) {
         if (this.prev() && this.prev()[0] && "IDENTIFIER SUCH SUPER PROPERTY ] INDEX_END ) CALL_END } SYMBOL_EXISTS".split(' ').includes(this.prev()[0])) {
           let b;
-          if ((this.prev()[0] === "IDENTIFIER") && (this.inClass()) && !(b = this.skipped.slice(-1)[0] === this.indentLevel)) {
+          if ((this.prev()[0] === "IDENTIFIER") && (this.inClass() && !(b = this.skipped.slice(-1)[0] === this.indentLevel) || this.assertTokens("CLASS IDENTIFIER"))) {
             this.token(
               'PARAM_START',
               '(',
@@ -448,7 +448,7 @@ class Lexer {
             );
             this.paramLine = true;
             this.prev().stageId = this.store(['param', this.position]);
-            this.prev().fromClass = true;
+            this.prev().fromClass = this.inClass();
           } else {
             if (b) {
               this.skipped.pop();
@@ -469,7 +469,7 @@ class Lexer {
             ++this.indentLevel;
             this.insertStage('call', 'implicit', 1);
           }
-        } else if (this.opLine && this.prev() && (this.prev()[0] == "WITH" || this.prev()[0] === "WITHIN") || this.prev()[0] === ")>" && this.funcLine === this.cursor.y && !this.stages.find(s => s.contains.find(c => c.includes("param")))) {
+        } else if (this.opLine && this.prev() && (this.prev()[0] == "WITH" || this.prev()[0] === "WITHIN") || this.prev()[0] === ")>" && this.funcLine === this.cursor.y && !this.stages.find(s => s.contains.find(c => c.includes("param"))) || this.assertTokens('CLASS IDENTIFIER')) {
           this.token(
             'PARAM_START',
             '(',
@@ -553,9 +553,9 @@ class Lexer {
             this.opLine = 'function';
             this.opLevel = this.stages.length;
           }
-        } else if ((token === "(") && !([...this.Opening, "NEWLINE"].includes(prev[0])) && (!prev || ["FUNCTION", "WITH", "WITHIN"].includes(prev[0]) || !prev.spaced)) {
+        } else if ((token === "(") && !([...this.Opening, "NEWLINE"].includes(prev[0])) && (!prev || ["FUNCTION", "WITH", "WITHIN"].includes(prev[0]) || this.assertTokens('CLASS IDENTIFIER') || !prev.spaced)) {
           let z;
-          if (this.funcLine === this.cursor.y || (this.prev()[0] === "WITH" || this.prev()[0] === "WITHIN" || this.prev()[0] === ")>" && this.funcLine === this.cursor.y && !this.stages.find(s => s.contains.find(c => c.includes("param"))))) {
+          if (this.funcLine === this.cursor.y || (this.prev()[0] === "WITH" || this.prev()[0] === "WITHIN" || this.prev()[0] === ")>" && this.funcLine === this.cursor.y && !this.stages.find(s => s.contains.find(c => c.includes("param")))) || this.assertTokens('CLASS IDENTIFIER')) {
             _ref = "PARAM_END";
             token = "PARAM_START";
           } else if (this.inClass() && ((this.prev()[0] === "IDENTIFIER") || (this.prev().spaced && (this.prev()[0] === "WITH" || this.prev()[0] === "WITHIN" || this.prev()[0] === ")>" && this.funcLine === this.cursor.y && !this.stages.find(s => s.contains.find(c => c.includes("param"))))) || (z = !this.prev()[2].generated && ["INDENT", "NEWLINE"].includes(this.prev()[0])))) {
@@ -702,7 +702,7 @@ class Lexer {
             }
 
             if ((token === "(") && !([...this.Opening, "NEWLINE"].includes(prev[0])) && (!prev || ["FUNCTION", "WITH", "WITHIN"].includes(prev[0]) || !prev.spaced)) {
-              if (this.funcLine === this.cursor.y || (this.prev()[0] === "WITH" || this.prev()[0] === "WITHIN")) {
+              if (this.funcLine === this.cursor.y || (this.prev()[0] === "WITH" || this.prev()[0] === "WITHIN") || this.assertTokens('CLASS IDENTIFIER')) {
                 if (this.funcLine === this.cursor.y) this.funcLine = -1;
                 token = "PARAM_START";
                 this.paramLine = true;
@@ -992,7 +992,7 @@ class Lexer {
         if (this.isELSON) return;
 
         let b;
-        if ((prev[0] === "IDENTIFIER" || prev[0] === ")>") && this.inClass() && !(b = this.skipped.slice(-1)[0] === this.indentLevel) || (this.funcLine === this.cursor.y)) {
+        if ((prev[0] === "IDENTIFIER" || prev[0] === ")>") && this.inClass() && !(b = this.skipped.slice(-1)[0] === this.indentLevel) || (this.funcLine === this.cursor.y) || this.assertTokens("CLASS IDENTIFIER")) {
           this.token(
             'PARAM_START',
             '(',
@@ -1006,11 +1006,12 @@ class Lexer {
 
           this.paramLine = true;
           this.prev().stageId = this.store(['param', this.position]);
-          this.prev().fromClass = true;
+          this.prev().fromClass = this.inClass();
         } else {
           if (b && this.inExplicit()) {
             this.skipped.pop();
           }
+
           if (this.inClass() && this.opLine) {
             this.opLine = false;
             this.opLevel = -1;
@@ -1164,7 +1165,7 @@ class Lexer {
         this.token('EXTENDS', 'extends', { generated: true });
       }
 
-      if (tag === "IDENTIFIER") {
+      if (!this.names.includes(token)) {
         this.names.push(token);
       }
 
@@ -1177,7 +1178,7 @@ class Lexer {
     // since Soles is literal-like script, we reserve a bunch of keywords
     let reg = this.isELSON ? /^(true|false|yes|no|null|nil|undefined)(:)?/ : /^(as|and|or|plus|includes|has|function\*?|[gs]et|static|i[fn]|of|or|not|true|false|undefined|nil|null|new|delete|return|void|yield|await|async|either|do|with(?:in)?|whil(?:e|st)|for|whe(?:n|ther)|unless|until|else|loop|has|try|catch|finally|otherwise|then|exists|class(?:\*)?|extends|typeof|instanceof|is not|is(?:nt)?|defaults?|continue|break|switch|case|when|on|throw)(:)?(?!(?:[^\x00-\x7F]|[a-zA-Z$_])(?:[^\x00-\x7F]|[a-zA-Z$_\d])*)/;
     
-    if (reg.test(this.chunk) || !this.isELSON && ((reg = /^(@)\s*/).test(this.chunk) || (reg = /^(with(?:in)?(?=[([{<]))/).test(this.chunk)) || (reg = /^(=(?!>))/).test(this.chunk)) {
+    if (reg.test(this.chunk) || !this.isELSON && ((reg = /^(@)\s*/).test(this.chunk) || (reg = /^(with(?:in)?(?=[([{<]))/).test(this.chunk)) || (reg = /^(=(?!(?:>|=)))/).test(this.chunk)) {
       let output = true,
         input, [, token, colon] = reg.exec(this.chunk),
         origin;
@@ -1266,7 +1267,7 @@ class Lexer {
         }
       }
 
-      if (["and", "or", "in", "of", "is", "isnt"].includes(token)) {
+      if (["and", "or", "in", "of", "is", "isnt", "extends"].includes(token)) {
         let x = true;
         this.rmNL();
         if ((["in", "of"].includes(token) && this.forLine !== this.cursor.y)) x = false;
@@ -1430,9 +1431,11 @@ class Lexer {
   }
 
   Assign() {
-    let reg = /^((?:at|from|as)(:)?\s|=)/;
+    let reg = /^((?:at|from|as)(:)?\s|=(?!(?:=|>)))/;
     if (reg.test(this.chunk)) {
       let [, token, colon] = reg.exec(this.chunk), len = token.length, origin;
+
+      token = token.trim();
 
       if (token === "=" && this.prev()[0] === "PARAM_END") {
         return;
@@ -1693,6 +1696,9 @@ class Lexer {
                 tag = "CALL_START";
                 type = "call";
                 close = false;
+              } else if (!["WITH", "PARAM_END"].includes(this.prev()[0])) {
+                this.token("PARAM_START", "(", { generated: true });
+                this.token("PARAM_END", "(", { generated: true });
               }
             } else if (!this.actExp && /^AT|AS|FROM|:$/.test(this.prev()[0])) {
               close = false;
@@ -2170,11 +2176,12 @@ class Lexer {
         ")": "(",
         "]": "[",
         "}": "{",
+        "}}": "{{",
         ")>": "<",
         CALL_END: "CALL_START",
         INDEX_END: "INDEX_START"
       })[explicit];
-      explicit = ({ CALL_END: ")", INDEX_END: ")", ")>": ">" })[explicit] || explicit;
+      explicit = ({ CALL_END: ")", INDEX_END: ")", ")>": ">", "}}": "}" })[explicit] || explicit;
       throwSyntaxError({
         message: `Missing "${explicit}" for this token`,
         location: this.tokens.find(t => t.pair === data[2] && t[0] === matching)[2]

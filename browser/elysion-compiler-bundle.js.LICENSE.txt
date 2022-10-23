@@ -62,6 +62,8 @@
 
 /*! Production::    Assignable : Array */
 
+/*! Production::    Assignable : Expression IN Expression */
+
 /*! Production::    Assignable : Identifier */
 
 /*! Production::    Assignable : Object */
@@ -132,27 +134,33 @@
 
 /*! Production::    Catch : CATCH Identifier THEN Expression */
 
-/*! Production::    Class : CLASS Block */
+/*! Production::    Class : CLASS ClassConstructor? Block */
 
-/*! Production::    Class : CLASS EXTENDS Value */
+/*! Production::    Class : CLASS ClassConstructor? EXTENDS Value */
 
-/*! Production::    Class : CLASS EXTENDS Value Block */
+/*! Production::    Class : CLASS ClassConstructor? EXTENDS Value Block */
 
-/*! Production::    Class : CLASS EXTENDS Value THEN Block */
+/*! Production::    Class : CLASS ClassConstructor? EXTENDS Value THEN Block */
 
-/*! Production::    Class : CLASS Identifier */
+/*! Production::    Class : CLASS ClassConstructor? THEN Block */
 
-/*! Production::    Class : CLASS Identifier Block */
+/*! Production::    Class : CLASS Identifier ClassConstructor? */
 
-/*! Production::    Class : CLASS Identifier EXTENDS Value */
+/*! Production::    Class : CLASS Identifier ClassConstructor? Block */
 
-/*! Production::    Class : CLASS Identifier EXTENDS Value Block */
+/*! Production::    Class : CLASS Identifier ClassConstructor? EXTENDS Value */
 
-/*! Production::    Class : CLASS Identifier EXTENDS Value THEN Block */
+/*! Production::    Class : CLASS Identifier ClassConstructor? EXTENDS Value Block */
 
-/*! Production::    Class : CLASS Identifier THEN Block */
+/*! Production::    Class : CLASS Identifier ClassConstructor? EXTENDS Value THEN Block */
 
-/*! Production::    Class : CLASS THEN Block */
+/*! Production::    Class : CLASS Identifier ClassConstructor? THEN Block */
+
+/*! Production::    ClassConstructor? : %epsilon */
+
+/*! Production::    ClassConstructor? : Params */
+
+/*! Production::    ClassConstructor? : WITH Params */
 
 /*! Production::    Clause : Clause COMPOUND_AND Compare Expression */
 
@@ -211,8 +219,6 @@
 /*! Production::    Compare : ">" */
 
 /*! Production::    Compare : ">=" */
-
-/*! Production::    Compare : IN */
 
 /*! Production::    Compare : INSTANCEOF */
 
