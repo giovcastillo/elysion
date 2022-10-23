@@ -1,0 +1,7 @@
+var char :: string
+
+class Letter with char :: string
+  toUpperCase := number
+    .char = "abc"
+
+a :: string = "Hello!"
