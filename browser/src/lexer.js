@@ -54,7 +54,7 @@ class Lexer {
       var consumed = this.isELSON ?
         this.Separator() || this.Whitespace() || this.Comment() || this.String() || this.KeywordStatement() || this.Number() || this.Literal() || this.Identifier()
         :
-        this.Separator() || this.Whitespace() || this.Comment() || this.String() || this.importPath() || this.Regex() || this.Assign() || this.AssignKeyword() || this.ImportExport() || this.KeywordStatement() || this.Type() || this.Number() || this.Literal() || this.Identifier();
+        this.Separator() || this.Whitespace() || this.Comment() || this.String() || this.Regex() || this.Assign() || this.AssignKeyword() || this.ImportExport() || this.KeywordStatement() || this.Type() || this.Number() || this.Literal() || this.Identifier();
 
       if (!consumed) {
         let msg = "unexpected token " + (this.chunk[0]);
