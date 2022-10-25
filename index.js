@@ -123,43 +123,42 @@ class Elysion {
       let { js, sources, isTypeScript } = new Parser(nodes, { comments, ...options }).parse(options);
 
       let sourceMap;
-      if (options.sourceMaps) {
-        if (sources.length) {
-          var ln = sources.length, stack = 0;
-          while (ln !== 0) {
-            if (stack > 5) break;
-            stack++;
-            js = js.replace(/\/\*@[0-9A-F]{18}\*\//i, function (str, d) {
-              var ind = sources.findIndex(src => src[0] === str),
-                source = sources[ind];
+      if (sources.length) {
+        var ln = sources.length, stack = 0;
+        var match;
+        while (match = /\/\*@[0-9a-f]{18}\*\//g.exec(js.slice(stack))) {
+          var str = match[0];
+          var d = stack + match.index;
+          var ind = sources.findIndex(src => src[0] === str);
+          var source = sources[ind];
 
-              if (source && source.length) {
-                let x, y;
-                x = js.slice(0, d).split(/\n/g).pop().length;
-                y = count(js.slice(0, d), '\n');
+          if (source && source.length) {
+            let x, y;
+            x = js.slice(0, d).split(/\n/g).pop().length;
+            y = count(js.slice(0, d), '\n');
 
-                sources[ind] = {
-                  sourceLine: source[1].first_line - 1,
-                  sourceColumn: source[1].first_column - 1,
-                  lastSourceColumn: source[1].last_column - 1,
-                  lastSourceLine: source[1].last_line - 1,
-                  line: y,
-                  column: x,
-                  source: source[1].source,
-                  sourceName: source[1].sourceName
-                }
-                
-                ln--;
-                stack = 0;
-                return '';
-              } else {
-                return str;
-              }
-            });
+            sources[ind] = {
+              sourceLine: source[1].first_line - 1,
+              sourceColumn: source[1].first_column - 1,
+              lastSourceColumn: source[1].last_column - 1,
+              lastSourceLine: source[1].last_line - 1,
+              line: y,
+              column: x,
+              source: source[1].source,
+              sourceName: source[1].sourceName
+            }
+
+            js = js.slice(0, d) + js.slice(d).replace(str, "");
           }
 
-          sourceMap = new SourceMap(sources).generate({ generatedFile: options.generatedFile, sourceMap: options.inlineMap ? script : undefined, ...options }, script);
+          stack += match.index;
         }
+
+        sourceMap = new SourceMap(sources).generate({ generatedFile: options.generatedFile, sourceMap: options.inlineMap ? script : undefined, ...options }, script);
+      }
+
+      if (options.sourceMaps) {
+        result.sourceMap = sourceMap;
       }
 
       if (isTypeScript) {
@@ -173,7 +172,6 @@ class Elysion {
       }
 
       result.output = js;
-      result.sourceMap = sourceMap;
       result.sources = sources;
       result.isTypeScript = isTypeScript;
       return result;

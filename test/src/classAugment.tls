@@ -1,0 +1,10 @@
+class Letter with char :: string
+
+class Letter2
+  with .char :: string
+
+letters = 
+  new Letter \A
+  new Letter2 \B
+
+print toString() in letter for letter of letters

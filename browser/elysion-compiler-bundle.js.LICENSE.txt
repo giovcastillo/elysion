@@ -800,6 +800,8 @@
 
 /*! Production::    ParamIdentifier : THIS "." PROPERTY DEFAULTS Expression */
 
+/*! Production::    ParamIdentifier : THIS */
+
 /*! Production::    ParamList : Param */
 
 /*! Production::    ParamList : ParamList "," Param */

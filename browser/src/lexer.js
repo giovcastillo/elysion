@@ -13,7 +13,7 @@ class Lexer {
     this.dirname = options.dirname;
     this.sdir = options.isInclude ? options.sdir : this.dirname;
     this.tabSize = options.tabSize || 2;
-    this.skipped = [];
+    this.skipped = -1;
     this.assignLine = -1;
     this.forLine = -1;
     this.funcLine = -1;
@@ -54,7 +54,7 @@ class Lexer {
       var consumed = this.isELSON ?
         this.Separator() || this.Whitespace() || this.Comment() || this.String() || this.KeywordStatement() || this.Number() || this.Literal() || this.Identifier()
         :
-        this.Separator() || this.Whitespace() || this.Comment() || this.String() || this.Regex() || this.Assign() || this.AssignKeyword() || this.ImportExport() || this.KeywordStatement() || this.Type() || this.Number() || this.Literal() || this.Identifier();
+        this.Separator() || this.Whitespace() || this.Comment() || this.String() || this.importPath() || this.Regex() || this.Assign() || this.AssignKeyword() || this.ImportExport() || this.KeywordStatement() || this.Type() || this.Number() || this.Literal() || this.Identifier();
 
       if (!consumed) {
         let msg = "unexpected token " + (this.chunk[0]);
@@ -156,7 +156,7 @@ class Lexer {
       }
 
       let typeToken = {
-        value: type,
+        value: type.trim(),
         nodes: nodes.visit(1, 1, 0, 1, 1, 1, 2),
         optional,
         loc: {
@@ -185,7 +185,7 @@ class Lexer {
       } else this.float = typeToken;
 
       return input.length;
-    } else if ((ref = /^[&|?:]:/.exec(this.chunk)) || (ref = /^:=/.exec(this.chunk)) || (ref = /^:/.exec(this.chunk)) && (this.stage().quotedIf === undefined || !this.stage().quotedIf.length) && !!this.prev().spaced) {
+    } else if (((ref = /^[&|?:]:/.exec(this.chunk)) || (ref = /^:=/.exec(this.chunk)) || (ref = /^:/.exec(this.chunk))) && (this.stage().quotedIf === undefined || !this.stage().quotedIf.length) && (this.prev().spaced || this.prev()[0] === "PARAM_END" || this.prev()[0] === "THEN")) {
       let i = ref[0].length - 1, symbols = [], str = ref[0], virtualLoc = { x: this.cursor.x + i, y: this.cursor.y }, offset = 0;
 
       while (++i) {
@@ -193,11 +193,17 @@ class Lexer {
 
         virtualLoc.x++;
 
-        let char = this.chunk.charAt(i);
+        let char = this.chunk.charAt(i), z;
         if (/[<[{(]/.test(char)) {
           symbols.push(char);
         } else if (/^[\s ]/.test(char) && str === ref[0]) {
+          str += " ";
           offset++;
+          continue;
+        } else if (z = /^\s*\|(?!\|)\s*/.exec(this.chunk.slice(i))) {
+          offset += z[0].length;
+          str += z[0];
+          i += z[0].length - 1;
           continue;
         } else if (/[^\w)\]}>]/.test(char) && !symbols.length || /^[)\]}>]/.test(char) && !symbols.length) break;
 
@@ -232,7 +238,7 @@ class Lexer {
         }, this.code.split("\n")[virtualLoc.y - 1]);
       }
 
-      let reg = /^([&:?|])?:(=)?(.+)/;
+      let reg = /^([&:?!|])?:(=)?(.+)/;
       let part = reg.exec(str);
 
       if (!part) return;
@@ -240,7 +246,7 @@ class Lexer {
       let [input, optional, returns, type] = part;
       let len = type.length;
 
-      if (optional === ':' && !this.prev().spaced) return;
+      if (optional === ':' && !this.prev().spaced && !["PARAM_END", "THEN"].includes(this.prev()[0])) return;
 
       optional = optional === '?';
 
@@ -278,7 +284,8 @@ class Lexer {
       }
 
       let typeToken = {
-        value: type, optional,
+        value: type.trim(), 
+        optional,
         nodes: nodes.visit(1, 1, 0, 1, 1, 1, 2),
         loc: {
           first_column: this.cursor.x,
@@ -306,11 +313,10 @@ class Lexer {
             origin: ':=, possibly missing function body',
             last_column: this.cursor.x + 2
           });
-          this.prev()
         }
       }
 
-      if (this.prev()[0] && /IDENTIFIER|PROPERTY|INDEX_END|\}|\]|PARAM_END|THEN/.test(this.prev()[0])) {
+      if (this.prev()[0] && (/IDENTIFIER|PROPERTY|INDEX_END|\}|\]|PARAM_END|THEN/.test(this.prev()[0]) || "THIS" === this.prev()[0] && this.paramLine === true)) {
         this.prev()[2].type = typeToken;
       } else if (this.prev()[0] === ":" && this.tokens.length > 1 && /IDENTIFIER|PROPERTY|INDEX_END/.test(this.tokens[this.tokens.length - 2][0])) {
         this.tokens[this.tokens.length - 2][2].type = typeToken;
@@ -440,7 +446,7 @@ class Lexer {
       if (!this.isELSON && ((/\{|\[|\.(\.\.)?/.test(token) || isArrowFunc) && (token === "." && !this.prev()[0] || (["IDENTIFIER", "PROPERTY", "SYMBOL_EXISTS"].includes(this.prev()[0]) && this.prev().spaced && !(/^\s*(\n|;)/.test(this.chunk.slice(token.length)) && this.opLine)) || this.prev()[0] && !["IDENTIFIER", "PROPERTY", "]", "INDEX_END", "STRING_END", "STRING", "REGEX", "REGEX_END", ".", ")", "CALL_END", "}", "THIS", "SUCH", "SUPER", "OUTDENT"].includes(this.prev()[0])))) {
         if (this.prev() && this.prev()[0] && "IDENTIFIER SUCH SUPER PROPERTY ] INDEX_END ) CALL_END } SYMBOL_EXISTS".split(' ').includes(this.prev()[0])) {
           let b;
-          if ((this.prev()[0] === "IDENTIFIER") && (this.inClass() && !(b = this.skipped.slice(-1)[0] === this.indentLevel) || this.assertTokens("CLASS IDENTIFIER"))) {
+          if ((this.prev()[0] === "IDENTIFIER") && (this.inClass() && !(b = this.skipped === this.indentLevel) || this.assertTokens("CLASS IDENTIFIER"))) {
             this.token(
               'PARAM_START',
               '(',
@@ -616,7 +622,7 @@ class Lexer {
           this.paramLine = true;
           this.prev().stageId = this.store(['param', this.position]);
         } else if (((token !== "(") && (token !== "<(") || isArrowFunc) && (!this.opLine) && "SUCH SUPER IDENTIFIER PROPERTY ] INDEX_END CALL_END ) } SYMBOL_EXISTS".split(' ').includes(this.prev()[0]) && this.prev().spaced && !this.paramLine) {
-          let b = this.skipped.slice(-1)[0] === this.indentLevel;
+          let b = this.skipped === this.indentLevel;
           if (b && this.inExplicit()) {
             this.skipped.pop();
           }
@@ -903,7 +909,7 @@ class Lexer {
         return match.length;
       } else {
         if ("SUCH SUPER IDENTIFIER PROPERTY ] INDEX_END CALL_END ) } SYMBOL_EXISTS".split(' ').includes(this.prev()[0]) && this.prev().spaced) {
-          let b = this.skipped.slice(-1)[0] === this.indentLevel;
+          let b = this.skipped === this.indentLevel;
           if (b && this.inExplicit()) {
             this.skipped.pop();
           }
@@ -992,7 +998,7 @@ class Lexer {
         if (this.isELSON) return;
 
         let b;
-        if ((prev[0] === "IDENTIFIER" || prev[0] === ")>") && this.inClass() && !(b = this.skipped.slice(-1)[0] === this.indentLevel) || (this.funcLine === this.cursor.y) || this.assertTokens("CLASS IDENTIFIER")) {
+        if ((prev[0] === "IDENTIFIER" || prev[0] === ")>") && this.inClass() && !(b = this.skipped === this.indentLevel) || (this.funcLine === this.cursor.y) || this.assertTokens("CLASS IDENTIFIER")) {
           this.token(
             'PARAM_START',
             '(',
@@ -1497,7 +1503,7 @@ class Lexer {
       this.token(token.toUpperCase(), token, { origin, $$accept: origin !== "=" || this.stage().typeKwd });
 
       if (this.inClass()) {
-        this.skipped.push(this.indentLevel);
+        this.skipped = this.indentLevel;
       }
 
       return len;
@@ -1526,7 +1532,7 @@ class Lexer {
 
       // Anyway, we update it before everything else
       currPosition.y += newlines;
-      currPosition.x = 1 + input.length - newlines;
+      currPosition.x = input.split('\n').pop().length + 1;
 
       const updatePosition = () => {
         this.cursor.y = currPosition.y;
@@ -1552,246 +1558,246 @@ class Lexer {
         if (this.funcLine === this.cursor.y) this.funcLine = -1;
       }
 
-      if (false) {
-      } else {
-        if (indent == this.indentLevel) {
-          if ((this.prev()[0] === "{") && this.actExp) {
-            this.explicit[this.explicit.length - 1][0] = "}}";
-            this.prev()[0] = "{{";
-          }
+      if (indent == this.indentLevel) {
+        if ((this.prev()[0] === "{") && this.actExp) {
+          this.explicit[this.explicit.length - 1][0] = "}}";
+          this.prev()[0] = "{{";
+        }
 
-          this.actExp = false;
-          let comma;
+        this.actExp = false;
+        let comma;
 
-          if ((this.prev()[0] === ",") || (this.prev()[0] === "NEWLINE") && this.prev().comma) comma = this.tokens.pop();
+        if ((this.prev()[0] === ",") || (this.prev()[0] === "NEWLINE") && this.prev().comma) comma = this.tokens.pop();
 
-          let dontMerge;
-          if (this.prev()[0] === "NEWLINE") {
-            newlines += this.tokens.pop()[1];
-          }
+        let dontMerge;
+        if (this.prev()[0] === "NEWLINE") {
+          newlines += this.tokens.pop()[1];
+        }
 
-          if (newlines > 1) {
-            this.close();
-            dontMerge = true;
-          } else {
-            this.closeImplicitObjects(false, !!comma, !!comma);
-            dontMerge = false;
-          }
+        if (newlines > 1) {
+          this.close();
+          dontMerge = true;
+        } else {
+          this.closeImplicitObjects(false, !!comma, !!comma);
+          dontMerge = false;
+        }
 
-          this.stage().quotedIf = undefined;
+        this.stage().quotedIf = undefined;
+        this.skipped = -1;
 
-          let addNewlines = !this.Unfinished.includes(this.prev()[0]),/*
-          dontMerge = (/]|}/.test(this.prev()[0]) || (this.prev().isNext2GenArr && this.prev().comma) || this.prev().isNext2GenObj) && newlines > 1,*/
-            bool = this.stage().contains.length
+        let addNewlines = !this.Unfinished.includes(this.prev()[0]),/*
+        dontMerge = (/]|}/.test(this.prev()[0]) || (this.prev().isNext2GenArr && this.prev().comma) || this.prev().isNext2GenObj) && newlines > 1,*/
+          bool = this.stage().contains.length
 
-          if (comma) {
-            this.rmNL();
-          }
+        if (comma) {
+          this.rmNL();
+        }
 
-          if (addNewlines && newlines && bool) {
-            this.token('NEWLINE', Math.max(newlines - 1, 0), {
-              isNext2GenObj: !dontMerge && (this.prev()[0] === "}") && this.prev()[2].generated,
-              isNext2GenArr: !dontMerge && (this.prev()[0] === "]") && this.prev()[2].generated,
-              $$accept: !dontMerge
-            });
-          }
+        if (addNewlines && newlines && bool) {
+          this.token('NEWLINE', Math.max(newlines - 1, 0), {
+            isNext2GenObj: !dontMerge && (this.prev()[0] === "}") && this.prev()[2].generated,
+            isNext2GenArr: !dontMerge && (this.prev()[0] === "]") && this.prev()[2].generated,
+            $$accept: !dontMerge
+          });
+        }
 
-          if (addNewlines && (this.prev()[0] !== "NEWLINE") && (this.prev()[0] !== "INDENT")) {
-            this.token('NEWLINE', Math.max(newlines - 1, 0), {
-              isNext2GenObj: !dontMerge && (this.prev()[0] === "}") && this.prev()[2].generated,
-              isNext2GenArr: !dontMerge && (this.prev()[0] === "]") && this.prev()[2].generated,
-              $$accept: true
-            })
-          }
+        if (addNewlines && (this.prev()[0] !== "NEWLINE") && (this.prev()[0] !== "INDENT")) {
+          this.token('NEWLINE', Math.max(newlines - 1, 0), {
+            isNext2GenObj: !dontMerge && (this.prev()[0] === "}") && this.prev()[2].generated,
+            isNext2GenArr: !dontMerge && (this.prev()[0] === "]") && this.prev()[2].generated,
+            $$accept: true
+          })
+        }
 
-          if (dontMerge) {
-            this.prev().$$accept = true;
-            delete this.prev().isNext2GenArr;
-            delete this.prev().isNext2GenObj;
-          }
+        if (dontMerge) {
+          this.prev().$$accept = true;
+          delete this.prev().isNext2GenArr;
+          delete this.prev().isNext2GenObj;
+        }
 
-          this.prev().comma = !!comma;
+        this.prev().comma = !!comma;
 
-          if ((newlines > 1) && this.stage().assignKwd) this.stage().assignKwd = "";
-          if ((newlines > 1) && this.stage().typeKwd) this.stage().typeKwd = "";
+        if ((newlines > 1) && this.stage().assignKwd) this.stage().assignKwd = "";
+        if ((newlines > 1) && this.stage().typeKwd) this.stage().typeKwd = "";
 
-          if (this.inClass() && (!this.opLine)) {
-            this.opLine = 'function';
-            this.opLevel = this.stages.length;
-          }
+        if (this.inClass() && (!this.opLine)) {
+          this.opLine = 'function';
+          this.opLevel = this.stages.length;
+        }
 
-          if (bool) {
-            this.prev().inImplicitObj = true
-          }
+        if (bool) {
+          this.prev().inImplicitObj = true
+        }
 
-          updatePosition();
-          return input.length;
-        } else if (indent > this.indentLevel) {
-          let bool;
-          if ((this.stage().contains.map(i => i[0]).includes('object')) && (this.prev()[0] !== ":")) {
-            bool = true;
-          }
+        updatePosition();
+        return input.length;
+      } else if (indent > this.indentLevel) {
+        let bool;
+        if ((this.stage().contains.map(i => i[0]).includes('object')) && (this.prev()[0] !== ":")) {
+          bool = true;
+        }
 
-          if (this.actExp && (this.prev()[0] !== "OUTDENT") && (this.prev()[0] !== "NEWLINE") && !bool && (this.prev()[0] !== "IF") && (this.prev()[0] !== "SWITCH") && (this.prev()[0] !== "WHILE") && (this.prev()[0] !== "[") && (this.prev()[0] !== "{") && (this.prev()[0] !== "(" && (this.prev()[0] !== ":") && !/^(A[ST]|FROM)$/.test(this.prev()[0]))) {
-            this.close(false, 0, true);
+        if (this.actExp && (this.prev()[0] !== "OUTDENT") && (this.prev()[0] !== "NEWLINE") && !bool && (this.prev()[0] !== "IF") && (this.prev()[0] !== "SWITCH") && (this.prev()[0] !== "WHILE") && (this.prev()[0] !== "[") && (this.prev()[0] !== "{") && (this.prev()[0] !== "(" && (this.prev()[0] !== ":") && !/^(A[ST]|FROM)$/.test(this.prev()[0]))) {
+          this.close(false, 0, true);
 
-            let t;
-            if (this.inClass()) {
-              if ((this.prev()[0] !== "PARAM_END") && (this.prev()[0] !== "WITH" && this.prev()[0] !== "WITHIN") && this.prev()[0] == "IDENTIFIER") {
-                this.token('WITH', 'with', {
-                  generated: true
-                })
-              }
-            }
-
-            if (this.inClass()) {
-              t = true;
-            }
-
-            let indents = 0;
-
-            while (this.indentLevel !== indent) {
-              ++this.indentLevel;
-              ++indents;
-            }
-
-            this.token('INDENT', input, { $$accept: true, pair: this.position + 1 });
-
-            this.insertStage('indent', this.actExp, indents);
-
-            this.actExp = false;
-
-            if (t) {
-              while (this.prev()[0] === "NEWLINE") {
-                this.tokens.pop();
-              }
-              this.opLine = this.actExp = 'function';
-              this.opLevel = this.stages.length;
-            }
-          } else {
-            var tag = "INDENT", inArrayLevel = this.stage().contains.map(i => i[0]).includes('array'),
-              inAssignChain = this.stage().assignKwd,
-              inTypeStatement = this.stage().typeKwd,
-              output = true;
-
-            let t, type = 'indent';
-
-            let indents = 0;
-
-            while (this.indentLevel !== indent) {
-              ++this.indentLevel;
-              ++indents;
-            }
-
-            let close = true;
-
-            if ((this.prev()[0] === "{") && this.actExp || this.prev()[0] === "{" && this.tokens[this.tokens.length - 2] && this.tokens[this.tokens.length - 2].canBlock) {
-              this.explicit[this.explicit.length - 1][0] = "}}";
-              this.prev()[0] = "{{";
-            } else if ("IDENTIFIER SUCH SUPER PROPERTY ] INDEX_END CALL_END ) } SYMBOL_EXISTS".split(' ').includes(this.prev()[0]) && !this.actExp && !inAssignChain && !this.stage().typeKwd) {
-              if (!this.inClass() || !(this.assertTokens("THIS . PROPERTY") || this.prev()[0] === "IDENTIFIER")) {
-                if (this.prev()[0] === "SYMBOL_EXISTS") {
-                  this.prev()[0] = "FUNC_EXISTS";
-                }
-                tag = "CALL_START";
-                type = "call";
-                close = false;
-              } else if (!["WITH", "PARAM_END"].includes(this.prev()[0])) {
-                this.token("PARAM_START", "(", { generated: true });
-                this.token("PARAM_END", "(", { generated: true });
-              }
-            } else if (!this.actExp && /^AT|AS|FROM|:$/.test(this.prev()[0])) {
-              close = false;
-            }
-
-            if (close) this.close(false, 0, true);
-
-            if ([inArrayLevel, inAssignChain].includes(true)) {
-              if (this.prev()[0] === "NEWLINE") {
-                this.tokens.pop();
-                if (this.prev()[0] !== ",") this.token(',', ',', { generated: true });
-              }
-            }
-
-            if (output) {
-              this.insertStage(type === "call" ? "indent&call" : type, type === "call" ? "implicit" : this.actExp, indents);
-
-              if (inAssignChain) {
-                this.stage().assignKwd = inAssignChain
-              }
-
-              if (inTypeStatement) {
-                this.stage().typeKwd = inTypeStatement;
-              }
-
-              if (this.inClass()) {
-                while (this.prev()[0] === "NEWLINE") {
-                  this.tokens.pop();
-                }
-
-                this.opLine = 'function';
-                this.opLevel = this.stages.length;
-              }
-            }
-
-            this.token(tag, input, { $$accept: true, pair: this.position, indent: true });
-
-            this.actExp = false;
-          }
-
-          updatePosition();
-          return input.length;
-        } else if (indent < this.indentLevel) {
-          while (this.prev()[0] == "NEWLINE") {
-            this.tokens.pop();
-          }
-
-          let comma;
-          if (this.prev()[0] === ",") this.tokens.pop();
-
-          this.closeToIndent(indent);
-
-          if (((!this.stage().contains.length) || !(this.stage().type === "explicit"))) {
-            if (this.stage().type === "call") {
-              this.close();
-            }
-
-            if (newlines > 1) { // we can add up to 2 newlines
-              this.token('NEWLINE', Math.max(newlines - 1, 0), { $$accept: true });
+          let t;
+          if (this.inClass()) {
+            if ((this.prev()[0] !== "PARAM_END") && (this.prev()[0] !== "WITH" && this.prev()[0] !== "WITHIN") && this.prev()[0] == "IDENTIFIER") {
+              this.token('WITH', 'with', {
+                generated: true
+              })
             }
           }
-
-          let dontMerge;
-          if (newlines > 1) {
-            this.close();
-            dontMerge = true;
-            this.stage().typeKwd = "";
-            this.stage().assignKwd = "";
-          } else {
-            this.closeImplicitObjects(false, !!comma, !!comma);
-            dontMerge = false;
-          }
-
-          if ((this.prev()[0] !== "NEWLINE") && (this.prev()[0] !== "INDENT")) {
-            this.token('NEWLINE', Math.max(newlines - 1, 0), {
-              isNext2GenObj: (this.prev()[0] === "}") && this.prev()[2].generated,
-              isNext2GenArr: (this.prev()[0] === "]") && this.prev()[2].generated,
-              $$accept: !(/}|]/.test(this.prev()[0]) && !this.prev()[2].generated)
-            })
-          }
-
-          this.prev().comma = !!comma;
-
-          this.actExp = false;
 
           if (this.inClass()) {
+            t = true;
+          }
+
+          let indents = 0;
+
+          while (this.indentLevel !== indent) {
+            ++this.indentLevel;
+            ++indents;
+          }
+
+          this.token('INDENT', input, { $$accept: true, pair: this.position + 1 });
+
+          this.insertStage('indent', this.actExp, indents);
+
+          this.actExp = false;
+
+          if (t) {
+            while (this.prev()[0] === "NEWLINE") {
+              this.tokens.pop();
+            }
             this.opLine = this.actExp = 'function';
             this.opLevel = this.stages.length;
           }
+        } else {
+          var tag = "INDENT", inArrayLevel = this.stage().contains.map(i => i[0]).includes('array'),
+            inAssignChain = this.stage().assignKwd,
+            inTypeStatement = this.stage().typeKwd,
+            output = true;
 
-          updatePosition();
-          return input.length;
+          let t, type = 'indent';
+
+          let indents = 0;
+
+          while (this.indentLevel !== indent) {
+            ++this.indentLevel;
+            ++indents;
+          }
+
+          let close = true;
+
+          if ((this.prev()[0] === "{") && this.actExp || this.prev()[0] === "{" && this.tokens[this.tokens.length - 2] && this.tokens[this.tokens.length - 2].canBlock) {
+            this.explicit[this.explicit.length - 1][0] = "}}";
+            this.prev()[0] = "{{";
+          } else if ("IDENTIFIER SUCH SUPER PROPERTY ] INDEX_END CALL_END ) } SYMBOL_EXISTS".split(' ').includes(this.prev()[0]) && !this.actExp && !inAssignChain && !this.stage().typeKwd) {
+            if (!this.inClass() || !(this.assertTokens("THIS . PROPERTY") || this.prev()[0] === "IDENTIFIER")) {
+              if (this.prev()[0] === "SYMBOL_EXISTS") {
+                this.prev()[0] = "FUNC_EXISTS";
+              }
+              tag = "CALL_START";
+              type = "call";
+              close = false;
+            } else if (!["WITH", "PARAM_END"].includes(this.prev()[0])) {
+              this.token("PARAM_START", "(", { generated: true });
+              this.token("PARAM_END", "(", { generated: true });
+            }
+          } else if (!this.actExp && /^AT|AS|FROM|:$/.test(this.prev()[0])) {
+            close = false;
+          }
+
+          if (close) this.close(false, 0, true);
+
+          if ([inArrayLevel, inAssignChain].includes(true)) {
+            if (this.prev()[0] === "NEWLINE") {
+              this.tokens.pop();
+              if (this.prev()[0] !== ",") this.token(',', ',', { generated: true });
+            }
+          }
+
+          if (output) {
+            this.insertStage(type === "call" ? "indent&call" : type, type === "call" ? "implicit" : this.actExp, indents);
+
+            if (inAssignChain) {
+              this.stage().assignKwd = inAssignChain
+            }
+
+            if (inTypeStatement) {
+              this.stage().typeKwd = inTypeStatement;
+            }
+
+            if (this.inClass()) {
+              while (this.prev()[0] === "NEWLINE") {
+                this.tokens.pop();
+              }
+
+              this.opLine = 'function';
+              this.opLevel = this.stages.length;
+            }
+          }
+
+          this.token(tag, input, { $$accept: true, pair: this.position, indent: true });
+
+          this.actExp = false;
         }
+
+        updatePosition();
+        this.skipped = -1;
+        return input.length;
+      } else if (indent < this.indentLevel) {
+        while (this.prev()[0] == "NEWLINE") {
+          this.tokens.pop();
+        }
+
+        let comma;
+        if (this.prev()[0] === ",") this.tokens.pop();
+
+        this.closeToIndent(indent);
+
+        if (((!this.stage().contains.length) || !(this.stage().type === "explicit"))) {
+          if (this.stage().type === "call") {
+            this.close();
+          }
+
+          if (newlines > 1) { // we can add up to 2 newlines
+            this.token('NEWLINE', Math.max(newlines - 1, 0), { $$accept: true });
+          }
+        }
+
+        let dontMerge;
+        if (newlines > 1) {
+          this.close();
+          dontMerge = true;
+          this.stage().typeKwd = "";
+          this.stage().assignKwd = "";
+        } else {
+          this.closeImplicitObjects(false, !!comma, !!comma);
+          dontMerge = false;
+        }
+
+        if ((this.prev()[0] !== "NEWLINE") && (this.prev()[0] !== "INDENT")) {
+          this.token('NEWLINE', Math.max(newlines - 1, 0), {
+            isNext2GenObj: (this.prev()[0] === "}") && this.prev()[2].generated,
+            isNext2GenArr: (this.prev()[0] === "]") && this.prev()[2].generated,
+            $$accept: !(/}|]/.test(this.prev()[0]) && !this.prev()[2].generated)
+          })
+        }
+
+        this.prev().comma = !!comma;
+
+        this.actExp = false;
+
+        if (this.inClass()) {
+          this.opLine = this.actExp = 'function';
+          this.opLevel = this.stages.length;
+        }
+
+        this.skipped = -1;
+        updatePosition();
+        return input.length;
       }
 
       updatePosition();
@@ -1840,7 +1846,7 @@ class Lexer {
       if (chunk.slice(lastFragment, i - 1)) fragments.push(this._token('REGEX', chunk.slice(lastFragment, i - 1)))
 
       if ("IDENTIFIER SUCH SUPER PROPERTY ] INDEX_END CALL_END ) } SYMBOL_EXISTS )>".split(' ').includes(this.prev()[0]) && this.prev().spaced) {
-        let b = this.skipped.slice(-1)[0] === this.indentLevel;
+        let b = this.skipped === this.indentLevel;
         if (b && this.inExplicit()) {
           this.skipped.pop();
         }
@@ -1913,7 +1919,7 @@ class Lexer {
       if (chunk.slice(lastFragment, i - 1)) fragments.push(this._token('STRING', chunk.slice(lastFragment, i - 1)))
 
       if ("IDENTIFIER SUCH SUPER PROPERTY ] INDEX_END CALL_END ) } SYMBOL_EXISTS )>".split(' ').includes(this.prev()[0]) && this.prev().spaced) {
-        let b = this.skipped.slice(-1)[0] === this.indentLevel;
+        let b = this.skipped === this.indentLevel;
         if (b && this.inExplicit()) {
           this.skipped.pop();
         }
@@ -1940,7 +1946,7 @@ class Lexer {
         case 0: this.token('STRING', quote.repeat(2)); break;
         case 1: {
           this.tokens.push(Object.assign(fragments[0], {
-            1: `${quote}${fragments[0][1]}${quote}`, loc: {
+            1: `${quote}${fragments[0][1]}${quote}`, 2: {
               ...fragments[0][2],
               last_column: fragments[0][2].last_column + 2
             }
@@ -1959,7 +1965,7 @@ class Lexer {
       return i;
     } else if (sling) {
       let [input, string] = sling;
-      string = string.replace(/(?:\\*)"|\\+/g, function (s, o) {
+      string = string.replace(/(?:\\*)"|\\+/g, function (s) {
         let slashes = (/^\\+/.exec(s) ?? [])[0], qt = s.endsWith('"');
 
         if (qt) {
@@ -1976,7 +1982,7 @@ class Lexer {
       });
 
       if ("IDENTIFIER SUCH SUPER PROPERTY ] INDEX_END CALL_END ) } SYMBOL_EXISTS )>".split(' ').includes(this.prev()[0]) && this.prev().spaced) {
-        let b = this.skipped.slice(-1)[0] === this.indentLevel;
+        let b = this.skipped === this.indentLevel;
         if (b && this.inExplicit()) {
           this.skipped.pop();
         }
@@ -1999,8 +2005,14 @@ class Lexer {
         this.token('NEWLINE', 0, { generated: true });
       }
 
-      this.token('STRING', `"${string}"`);
-      return input.length;
+      this.token('STRING', `"${string}"`, {
+        loc: {
+          first_column: this.cursor.x,
+          first_line: this.cursor.y,
+          last_line: this.cursor.y,
+          last_column: this.cursor.x + input.length
+        }
+      });
     }
   }
 
@@ -2476,7 +2488,7 @@ class Lexer {
 
   postfixeables = 'THIS IDENTIFIER REGEX REGEX_END PROPERTY ] } ) NUMBER CALL_END INDEX_END STRING_END STRING NpmPackage RETURN CONTINUE BREAK DEBUGGER SUCH SUPER SYMBOL_EXISTS ARGUMENT'.split(' ');
 
-  indexables ='THIS IDENTIFIER REGEX REGEX_END PROPERTY ] } ) CALL_END INDEX_END STRING_END STRING SUCH SUPER ARGUMENT'.split(' ')
+  indexables = 'THIS IDENTIFIER REGEX REGEX_END PROPERTY ] } ) CALL_END INDEX_END STRING_END STRING SUCH SUPER ARGUMENT'.split(' ')
 
   uncontinuous = 'STRING STRING_END NUMBER UNDEFINED NULL BOOL THIS REGEX REGEX_END INFINITY TAG'.split(' ');
 
