@@ -3040,7 +3040,7 @@ function parseComment(comment, tabs, forceWrap = false, registry) {
   return commentOutput;
 }
 
-function ParseParam(Parameter, { scope, vars, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments = [], lastNodeLocation, registry = {}, i, isInside }) {
+function ParseParam(Parameter, { scope, vars, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments = [], lastNodeLocation, registry = {}, i, isInside, isObject }) {
   let output = "";
   comments = [];
   switch (Parameter[0]) {
@@ -3059,7 +3059,7 @@ function ParseParam(Parameter, { scope, vars, tabs, constants, $such, that, varE
         isThis = Param[3];
 
       if (This || InsertAll && !isThis) {
-        let refName = Reference(scope, false, Name);
+        let refName = isObject ? Name : Reference(scope, false, Name);
         // this[thisProperty] = paramName
         Insert.push([Name, refName, Param.loc, Parameter.loc.type]); // [thisProperty, paramName]
         Params.push([refName, Param.loc, Parameter.loc.type]);
@@ -3107,11 +3107,10 @@ function ParseParamObject(ParamObject, { scope, vars, varExistent, tabs, constan
       Expansion = Entry[3],
       Loc = Entry[4] || {}
 
-    output += " ";
+    output += " " + (registry.sources ? registry.sources.add(Entry.loc || Loc) : '');
     if (Entry instanceof Nodes.ParamIdentifier) {
-      output += ParseParam(new Nodes.Param("ParamIdentifier", Entry).setLoc(Entry), { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, Params, comments, i, isInside });
+      output += ParseParam(new Nodes.Param("ParamIdentifier", Entry).setLoc(Entry), { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, Params, comments, i, isInside, isObject: true });
     } else {
-      output += (registry.sources ? registry.sources.add(Loc) : '');
       if (Expansion) output += "..." + (registry.sources ? registry.sources.add(Loc) : '');
       output += Key;
       if (!Value) Params.push([Key, Loc, Loc.type]);

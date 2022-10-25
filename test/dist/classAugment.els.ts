@@ -9,10 +9,10 @@ greet = function({ name }) {
 
 // Implicit object.
 class User {
-    constructor(id1, name1, color1) {
-        this.id = id1;
-        this.name = name1;
-        this.color = color1;
+    constructor({ id, name, color }) {
+        this.id = id;
+        this.name = name;
+        this.color = color;
     }
 }
 
