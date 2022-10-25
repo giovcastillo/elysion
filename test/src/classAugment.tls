@@ -1,10 +1,13 @@
-class Letter with char :: string
+#: greets the user
+greet = with name:
+	console.log "Hello #{name}!"
 
-class Letter2
-  with .char :: string
+# Implicit object.
+class User
+  with .id, .name, .color
 
-letters = 
-  new Letter \A
-  new Letter2 \B
-
-print toString() in letter for letter of letters
+new User
+  id: 'NjEzODQ2Mj'
+  name: 'john'
+  color: 'magenta'
+then greet

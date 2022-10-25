@@ -540,13 +540,13 @@ grammar.PropObj = [
 ];
 
 grammar.ParamPropObj = [
-    [`PROPERTY : ParamAssignable`, `$$ = [$1, $3]`],
-    [`PROPERTY :`, `$$ = [$1]`],
-    [`PROPERTY : DEFAULTS Expression`, `$$ = [$1,,$4]`],
+    [`PROPERTY : ParamAssignable`, `$$ = [$1,$3,,,@1]`],
+    [`PROPERTY :`, `$$ = [$1,,,,@1]`],
+    [`PROPERTY : DEFAULTS Expression`, `$$ = [$1,,$4,,@1]`],
     [`ParamIdentifier`, `$$ = $1`],
     [`ParamIdentifier DEFAULTS Expression`, `$$ = [$1,,$3]`],
-    [`... PROPERTY :`, `$$ = [$2,,,true]`],
-    [`PROPERTY : ...`, `$$ = [$1,,,true]`]
+    [`... PROPERTY :`, `$$ = [$2,,,true,@2]`],
+    [`PROPERTY : ...`, `$$ = [$1,,,true,@1]`]
 ]
 
 u(`Literal`, [

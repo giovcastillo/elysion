@@ -1274,7 +1274,7 @@ Nodes.Expression = class Expression extends Base {
     }
 
     if (construct) {
-      output = "new " + output;
+      output = (registry.sources ? registry.sources.add(this.loc) : '') + "new " + output;
     }
 
     if (addSemicolon.length && !block) {
@@ -2814,7 +2814,7 @@ Nodes.Value = class Value extends Base {
         break;
       };
       case "New": {
-        output += Value[1].parse({ vars, varExistent, isValue: true, constants, that, $such, scope, prevLine, tabs, func, scopedParams, isInvoked: true, construct: true, comments, lastNodeLocation, registry })
+        output += Value[1].setLoc(this.loc).parse({ vars, varExistent, isValue: true, constants, that, $such, scope, prevLine, tabs, func, scopedParams, isInvoked: true, construct: true, comments, lastNodeLocation, registry });
         break;
       }
     }
@@ -3104,15 +3104,17 @@ function ParseParamObject(ParamObject, { scope, vars, varExistent, tabs, constan
     let Key = Entry[0], // let Key: String
       Value = Entry[1], // let Value: String | undefined
       Defaults = Entry[2], // let Defaults: String | undefined
-      Expansion = Entry[3]
+      Expansion = Entry[3],
+      Loc = Entry[4] || {}
 
     output += " ";
     if (Entry instanceof Nodes.ParamIdentifier) {
       output += ParseParam(new Nodes.Param("ParamIdentifier", Entry).setLoc(Entry), { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, Params, comments, i, isInside });
     } else {
-      if (Expansion) output += "...";
+      output += (registry.sources ? registry.sources.add(Loc) : '');
+      if (Expansion) output += "..." + (registry.sources ? registry.sources.add(Loc) : '');
       output += Key;
-      if (!Value) Params.push([Key, Entry.loc, Entry.loc.type]);
+      if (!Value) Params.push([Key, Loc, Loc.type]);
       if (Value) output += ": " + (registry.sources ? registry.sources.add(Value.loc) : '') + ParseParam(Value, { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments });
       if (Defaults) output += " = " + Defaults.parse({ scope, vars, varExistent, tabs, constants, $such, that, varExistent, isValue: true, isParam: true, comments, i, isInside });
     }
