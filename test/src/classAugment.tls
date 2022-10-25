@@ -4,7 +4,7 @@ greet = with name:
 
 # Implicit object.
 class User
-  with .id, .name, .color
+  with { .id, .name, .color }
 
 new User
   id: 'NjEzODQ2Mj'
