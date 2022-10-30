@@ -1,7 +1,7 @@
 let errorToString, updateSyntaxError, red, supportsColors;
 
 class ElysionError extends SyntaxError {
-  constructor (err, { code, location, type, filename, intermediate }) {
+  constructor (err, { code, location, type, filename, intermediate, noFileHeader }) {
     super(err);
     this.location = location;
     this.src = location.src;
@@ -11,11 +11,12 @@ class ElysionError extends SyntaxError {
     this.type = type;
     this.filename = filename;
     this.intermediate = intermediate;
+    this.noFileHeader = noFileHeader;
   }
 }
 
 exports.throwSyntaxError = throwSyntaxError = function (err, code, filename) {
-  err = new ElysionError(err.message, { location: err.location, code, type: err.type || 'error', filename, intermediate: err.intermediate });
+  err = new ElysionError(err.message, { location: err.location, code, type: err.type || 'error', filename, intermediate: err.intermediate, noFileHeader: err.noFileHeader });
 
   throw filename ? err.toString() : err;
 }
@@ -33,7 +34,7 @@ exports.errorToString = errorToString = function () {
     filename = this.filename || '[stdin]';
   }
 
-  let errMessage = `${red(filename)}:${first_line}${red(':')}${first_column}${red(':')} ${this.type}: ${this.message}`;
+  let errMessage = this.noFileHeader ? this.message : `${red(filename)}:${first_line}${red(':')}${first_column}${red(' ->')} ${this.type}: ${this.message}`;
 
   if (this.code.length) {
     errorLine = this.code;
@@ -76,9 +77,7 @@ exports.updateSyntaxError = updateSyntaxError = function (error, code, filename)
 }
 
 exports.supportsColors = supportsColors = function () {
-  try {
-    return process.stdout.isTTY && !process.env.NODE_DISABLE_COLORS
-  } catch { }
+  return false;
 }
 
 exports.red = red = (str) => this.supportsColors() ? `\x1B[0;31m${str}\x1B[0m` : str;

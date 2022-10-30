@@ -201,7 +201,7 @@ Nodes.Array = class Array extends Base {
         x = true;
       } else nl = false;
 
-      let cO = "", it = Spot.parse({ that, $such, scope, addSemicolon: [], vars, varExistent, constants, prevLine, isCondition, isValue: true, isParam: true, tabs: x ? tabs + 1 : tabs, wrap, isClass, isAssignment, ID, comments: childComments, lastNodeLocation, registry });
+      let cO = "", it = Spot.parse({ that, $such, scope, addSemicolon: [], vars, varExistent, constants, prevLine, isCondition, isValue: true, isParam: true, tabs: tabs + 1, wrap, isClass, isAssignment, ID, comments: childComments, lastNodeLocation, registry });
 
       if (test) {
         it = it.slice(2, -2);
@@ -263,7 +263,12 @@ Nodes.Array = class Array extends Base {
 
     if (x && !BeforeComments && Spots.startsWith('{\n') && !(/\n\s*\}$/.test(Spots) && ll > 1)) {
       x = false;
-      Spots = Spots.replace(/\n  /g, '\n')
+      Spots = Spots.replace(new RegExp(`\\n(${" ".repeat(registry.tabSize)}){${tabs},}`, 'gm'), function (str) {
+        var tb = str.slice(1);
+        tb = tb.split(new RegExp(`(${" ".repeat(registry.tabSize)})`, 'g')).filter(t => t !== "").length;
+
+        return '\n' + tab(registry.tabSize, tb - 1);
+      })
     }
 
     if (x || b) output += "\n" + tab(registry.tabSize, tabs + 1);
@@ -569,10 +574,14 @@ Nodes.Assignment = class Assignment extends Base {
       case "AS": {
         LH = Assign[1].parse({ that, $such, scope, vars, varExistent, constants, constant, construct, isValue, prevLine, tabs, lineReturns, isCondition, isCompare, isAssignment: true, lastNodeLocation, registry, ID: isClass ? [] : ID, isStatement, FiresSoak, typeData, afterParse, metaComments });
         break;
+      };
+      case undefined: {
+        console.log('heck');
+        return Assign[1].parse({ registry });
       }
     }
 
-    if (isClass && registry.isTypeScript && !registry.omitTypeScript && typeData.length) {
+    if ((isClass || isStatement) && registry.isTypeScript && !registry.omitTypeScript && typeData.length) {
       LH += `: ${typeData[0].value}`
     }
 
@@ -601,14 +610,14 @@ Nodes.Assignment = class Assignment extends Base {
       })
     }
 
-    if (!isClass && !["Value Access", "Expression IN Expression", "ThisProperty"].includes(Assign[1].unwrap.rule)) {
+    if ((!isClass && !isStatement) && !["Value Access", "Expression IN Expression", "ThisProperty"].includes(Assign[1].unwrap.rule)) {
       if (!vars.__data) {
         vars.__data = [];
       }
 
       vars.__data.push(...typeData);
     } else if (!FiresSoak.length) {
-      if (!(isClass && registry.isTypeScript && !registry.omitTypeScript)) {
+      if (!((isClass || isStatement) && registry.isTypeScript && !registry.omitTypeScript)) {
         let mData = addMetaDataToPrevLine({
           prevLine, typeData, tabs, metaComments, registry
         });
@@ -845,14 +854,14 @@ Nodes.Class = class Class extends Base {
               new Nodes.Function(
                 "FuncHeader",
                 [
-                  new Nodes.Identifier('null', 'constructor').setLoc(Class.loc),
+                  new Nodes.Identifier('null', 'constructor').setLoc(classCtor.loc),
                   Object.assign(classCtor, { insertAll: true })
                 ],
-                new Nodes.Body(null, []).setLoc(Class.loc)
-              ).setLoc(Class.loc)
-            ).setLoc(Class.loc)
-          ).setLoc(Class.loc)
-        ).setLoc(Class.loc)
+                new Nodes.Body(null, []).setLoc(classCtor.loc)
+              ).setLoc(classCtor.loc)
+            ).setLoc(classCtor.loc)
+          ).setLoc(classCtor.loc)
+        ).setLoc(classCtor.loc)
       )
     }
 
@@ -882,6 +891,7 @@ Nodes.Class = class Class extends Base {
           valContent = Reference(scope, true, 'cont');
         }
 
+        var loc = this.findToken('CLASS') || classCtor && classCtor.loc || this.loc;
         Body.unwrap.push(
           new Nodes.Line("Expression",
             new Nodes.Expression('Value',
@@ -894,15 +904,15 @@ Nodes.Class = class Class extends Base {
                   new Nodes.Body(null, [
                     new Nodes.Line("SimpleCode", [
                       `${ins.length ?
-                        `${registry.useVar ? 'var' : 'let'} ${refVals} = ["${ins.join('", "')}"].map((function (${(!registry.omitTypeScript && registry.isTypeScript) ? `this: ${nom}, ` : ''}${valArg}${(!registry.omitTypeScript && registry.isTypeScript) ? ': string' : ''}) {\n${tab(registry.tabSize, tabs + 3 + (!!ForeignExps.length))}${registry.useVar ? 'var' : 'let'} ${valContent}${(!registry.omitTypeScript && registry.isTypeScript) ? ': any' : ''} = this[${valArg}];\n${tab(registry.tabSize, tabs + 3 + (!!ForeignExps.length))}return ${valArg} + "=" + (typeof ${valContent} === "string" && ('"'+ ${valContent}.replace('"', '\\"') +'"') || ${valContent});\n${tab(registry.tabSize, tabs + 2 + (!!ForeignExps.length))}}).bind(this));\n\n${tab(registry.tabSize, tabs + 2 + (!!ForeignExps.length))}` : ''
+                        `${registry.useVar ? 'var' : 'let'} ${refVals} = ["${ins.join('", "')}"].map((function (${(!registry.omitTypeScript && registry.isTypeScript) ? `this: ${nom}, ` : ''}${valArg}${(!registry.omitTypeScript && registry.isTypeScript) ? ': string' : ''}) {\n${tab(registry.tabSize, tabs + 3 + (!!ForeignExps.length))}${registry.useVar ? 'var' : 'let'} ${valContent}${(!registry.omitTypeScript && registry.isTypeScript) ? ': any' : ''} = this[${valArg}${(!registry.omitTypeScript && registry.isTypeScript) ? ` as keyof ${nom}` : ''}];\n${tab(registry.tabSize, tabs + 3 + (!!ForeignExps.length))}return ${valArg} + "=" + (typeof ${valContent} === "string" && ('"'+ ${valContent}.replace('"', '\\"') +'"') || ${valContent});\n${tab(registry.tabSize, tabs + 2 + (!!ForeignExps.length))}}).bind(this));\n\n${tab(registry.tabSize, tabs + 2 + (!!ForeignExps.length))}` : ''
                       }return \`${nom}(${ins.length ? '${' + refVals + '.join(", ")}' : ''})\`;`
                     ])
-                  ]).setLoc(Class.loc),
+                  ]).setLoc(loc),
                   { returns: ["string"] }
-                ).setLoc(Class.loc)
-              ).setLoc(Class.loc)
-            ).setLoc(Class.loc)
-          ).setLoc(Class.loc)
+                ).setLoc(loc)
+              ).setLoc(loc)
+            ).setLoc(loc)
+          ).setLoc(loc)
         );
 
         var tInserted = inserted.filter(inst => !!inst[3] && ThisProperties.findIndex(t => {
@@ -910,10 +920,10 @@ Nodes.Class = class Class extends Base {
         }) === -1);
 
         if (registry.isTypeScript && !registry.omitTypeScript && tInserted.length) {
-          ThisProperties.unshift(...tInserted.map(([,Identifier,Loc,Type]) => {
+          ThisProperties.unshift(...tInserted.map(([, Identifier, Loc, Type]) => {
             return new Nodes.Line('Expression',
               new Nodes.Expression('Value',
-                new Nodes.Value('Assignable', 
+                new Nodes.Value('Assignable',
                   new Nodes.Assignable('Identifier',
                     new Nodes.Identifier(null, Identifier)
                   )
@@ -935,7 +945,7 @@ Nodes.Class = class Class extends Base {
       if (ThisProperties.length && !this.isRecomp) {
         Body = ThisProperties.map((Type) => {
           return `${Type.unwrap.parse({ registry, addSemicolon: [] })}: ${Type.loc.type.value};\n${tab(registry.tabSize, tabs + 1)}`
-        }) + Body;
+        }).join('') + Body;
       }
 
       output += header;
@@ -2050,13 +2060,13 @@ Nodes.Object = class Object extends Base {
       LH = Obj[0];
       let metaQueue = [];
       if (LH instanceof Nodes.Expression) {
-        LH = `[${LH.parse({ that, $such, scope, addSemicolon: [], vars, varExistent, constants, prevLine, isValue: true, isParam: true, tabs: (test || x) ? tabs + 1 : tabs, isAssignment, ID, comments: childComments, lastNodeLocation, registry })}]`;
+        LH = `[${LH.parse({ that, $such, scope, addSemicolon: [], vars, varExistent, constants, prevLine, isValue: true, isParam: true, tabs: tabs + 1, isAssignment, ID, comments: childComments, lastNodeLocation, registry })}]`;
       } else if (LH instanceof Nodes.AlphaNum) {
         let wrp;
         if (LH.unwrap && LH.unwrap[0] === "StringWithInterpolations") wrp = true;
         if (registry.isELSON && LH.unwrap && LH.unwrap[0] !== "STRING") qt = true;
 
-        LH = LH.parse({ that, $such, scope, addSemicolon: [], vars, varExistent, constants, prevLine, isValue: true, isParam: true, tabs: (test || x) ? tabs + 1 : tabs, isAssignment, ID, comments: childComments, lastNodeLocation, registry });
+        LH = LH.parse({ that, $such, scope, addSemicolon: [], vars, varExistent, constants, prevLine, isValue: true, isParam: true, tabs: tabs + 1, isAssignment, ID, comments: childComments, lastNodeLocation, registry });
 
         if (wrp) LH = `[${LH}]`;
         if (qt) {
@@ -2080,7 +2090,7 @@ Nodes.Object = class Object extends Base {
           });
         }
 
-        it += `...` + Obj.parse({ $such, that, scope, vars, varExistent, constants, isAssignment, isValue: true });
+        it += `...` + Obj.parse({ $such, that, scope, vars, varExistent, constants, isAssignment, isValue: true, tabs: tabs + 1 });
       } else if (Obj instanceof Nodes.Function) {
         test = x = true;
         it += new Nodes.Value("Function", Obj).parse({ tabs: tabs + 1, $such, that, scope, vars, varExistent, constants, isAssignment, isValue: true, isObject: true, func: true, comments, registry, lastNodeLocation: this.loc, metaComments });
@@ -2090,7 +2100,7 @@ Nodes.Object = class Object extends Base {
           if ((Obj[1].rule === "Value") && ((["Function", "Code", "Class", "If", "Switch", "While", "TryBlock"].includes(Obj[1][1].rule)) || (Obj[1][1].rule === "Assignable") && (["Object", "Array"].includes(Obj[1][1][1].rule)))) {
             x = !isParam && true;
           }
-          RH = Obj[1].parse({ that, $such, scope, addSemicolon: [], vars, varExistent, constants, prevLine, isValue: true, isAssigned: true, isObjProperty: true, isAssignment, tabs: (x || Obj[2][2]) ? tabs + 1 : tabs, comments: childComments, lastNodeLocation, registry, isStatement, ID, metaComments, metaQueue });
+          RH = Obj[1].parse({ that, $such, scope, addSemicolon: [], vars, varExistent, constants, prevLine, isValue: true, isAssigned: true, isObjProperty: true, isAssignment, tabs: tabs + 1, comments: childComments, lastNodeLocation, registry, isStatement, ID, metaComments, metaQueue });
           it += ": " + RH;
         } else {
           if (registry.isELSON) {
@@ -2619,6 +2629,9 @@ Nodes.Statement = class Statement extends Base {
             if (keyword[0] === "CONST") this.throwSyntaxError("Missing initializer in constant declaration", self.loc)
             varExistent.push(self.parse());
             Statements += self.parse({ registry });
+            if (self.loc.type && registry.isTypeScript && !registry.omitTypeScript) {
+              Statements += `: ${self.loc.type.nodes.parse({ registry })}`;
+            }
           } else {
             let ID = [];
             Statements += new Nodes.Assign("Assignment", self).parse({ constant: keyword[0] === "CONST", addSemicolon: [], that, $such, scope, constants, vars, varExistent, prevLine, tabs: tabs + +(n), comments, registry, FiresSuper, FiresAwait, FiresYield, ID, isStatement: true, isValue: true });
@@ -3040,15 +3053,15 @@ function parseComment(comment, tabs, forceWrap = false, registry) {
   return commentOutput;
 }
 
-function ParseParam(Parameter, { scope, vars, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments = [], lastNodeLocation, registry = {}, i, isInside, isObject }) {
+function ParseParam(Parameter, { scope, vars, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments = [], lastNodeLocation, registry = {}, i, isInside, isObject, isArray, Types }) {
   let output = "";
   comments = [];
   switch (Parameter[0]) {
     case "ParamArray": {
-      return ParseParamArray(Parameter[1].unwrap, { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments, comments, lastNodeLocation, registry, i, isInside });
+      return ParseParamArray(Parameter[1].unwrap, { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments, comments, lastNodeLocation, registry, i, isInside, isArray, isObject, Types });
     };
     case "ParamObject": {
-      return ParseParamObject(Parameter[1].unwrap, { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments, comments, lastNodeLocation, registry, type: !registry.omitTypeScript && Parameter[1].loc.type });
+      return ParseParamObject(Parameter[1].unwrap, { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments, comments, lastNodeLocation, registry, type: !registry.omitTypeScript && Parameter[1].loc.type, isArray, isObject, Types, Loc: Parameter.loc });
     };
     case "ParamIdentifier": {
       let output = "";
@@ -3067,7 +3080,7 @@ function ParseParam(Parameter, { scope, vars, tabs, constants, $such, that, varE
       } else {
         if (isThis && (isInside || i !== 0)) {
           throwSyntaxError({
-            message: '\'this\' must be at the start of parameters', 
+            message: '\'this\' must be at the start of parameters',
             location: Parameter.loc
           });
         }
@@ -3076,10 +3089,16 @@ function ParseParam(Parameter, { scope, vars, tabs, constants, $such, that, varE
         output += Name;
       }
 
-      if (Parameter.loc.type) {
-        if (!registry.omitTypeScript) {
-          registry.isTypeScript = true;
-          output += `: ` + (registry.sources ? registry.sources.add(Parameter.loc.type.nodes.loc) : '') + Parameter.loc.type.nodes.parse({ registry })
+      if (Parameter.loc.type && !registry.omitTypeScript) {
+        registry.isTypeScript = true;
+        if (!isObject) {
+          if (isArray) {
+            Types.push((registry.sources ? registry.sources.add(merge(Parameter.loc, Parameter.loc.type.nodes.loc)) : '') + Parameter.loc.type.nodes.parse({ registry }));
+          } else {
+            output += `: ` + (registry.sources ? registry.sources.add(merge(Parameter.loc, Parameter.loc.type.nodes.loc)) : '') + Parameter.loc.type.nodes.parse({ registry });
+          }
+        } else {
+          Types.push((registry.sources ? registry.sources.add(merge(Parameter.loc, Parameter.loc.type.nodes.loc)) : '') + Name + `: ` + (registry.sources ? registry.sources.add(Parameter.loc.type.nodes.loc) : '') + Parameter.loc.type.nodes.parse({ registry }));
         }
       }
 
@@ -3097,25 +3116,36 @@ function ParseParam(Parameter, { scope, vars, tabs, constants, $such, that, varE
   return output;
 }
 
-function ParseParamObject(ParamObject, { scope, vars, varExistent, tabs, constants, $such, that, Insert, InsertAll, Params, comments = [], lastNodeLocation, registry = {}, type, i, isInside }) {
-  var output = "{";
+function ParseParamObject(ParamObject, { scope, vars, varExistent, tabs, constants, $such, that, Insert, InsertAll, Params, comments = [], lastNodeLocation, registry = {}, type, i, isInside, isArray, Types: ParentTypes, Loc }) {
+  var output = "{",
+    Types = [];
   for (var i = 0; i < ParamObject.length; i++) {
     let Entry = ParamObject[i];
     let Key = Entry[0], // let Key: String
       Value = Entry[1], // let Value: String | undefined
       Defaults = Entry[2], // let Defaults: String | undefined
       Expansion = Entry[3],
-      Loc = Entry[4] || {}
+      Loc = Entry[4] || {};
 
     output += " " + (registry.sources ? registry.sources.add(Entry.loc || Loc) : '');
     if (Entry instanceof Nodes.ParamIdentifier) {
-      output += ParseParam(new Nodes.Param("ParamIdentifier", Entry).setLoc(Entry), { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, Params, comments, i, isInside, isObject: true });
+      output += ParseParam(new Nodes.Param("ParamIdentifier", Entry).setLoc(Entry.loc), { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, Params, comments, i, isInside, isObject: true, Types, registry });
     } else {
       if (Expansion) output += "..." + (registry.sources ? registry.sources.add(Loc) : '');
       output += Key;
       if (!Value) Params.push([Key, Loc, Loc.type]);
-      if (Value) output += ": " + (registry.sources ? registry.sources.add(Value.loc) : '') + ParseParam(Value, { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments });
+      if (Value) {
+        Types.Key = Key;
+        Types.KeyLoc = Loc || Value.loc;
+        output += ": " + (registry.sources ? registry.sources.add(Value.loc) : '') + ParseParam(Value, { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments, isObject: true, Types, registry });
+        Types.Key = undefined;
+        Types.KeyLoc = undefined;
+      }
       if (Defaults) output += " = " + Defaults.parse({ scope, vars, varExistent, tabs, constants, $such, that, varExistent, isValue: true, isParam: true, comments, i, isInside });
+
+      if (Loc && Loc.type) {
+        Types.push((registry.sources ? registry.sources.add(merge(Loc, Loc.type.nodes.loc)) : '') + Key + ': ' + (registry.sources ? registry.sources.add(Loc.type.nodes.loc) : '') + Loc.type.nodes.parse({ registry }))
+      }
     }
     output += ","
   }
@@ -3123,9 +3153,37 @@ function ParseParamObject(ParamObject, { scope, vars, varExistent, tabs, constan
   if (output.charAt(output.length - 1) === ",") output = output.slice(0, -1);
   output += " }";
 
-  if (type && !registry.omitTypeScript) {
+  if (!ParentTypes && !registry.omitTypeScript && (type || Types.length)) {
     registry.isTypeScript = true;
-    output += `: ${type.nodes.parse({ registry })}`;
+    output += `: `;
+    var ttp = [];
+    if (Types.length) {
+      ttp.push(`{ ${Types.join(', ')} }`);
+    }
+
+    if (type) {
+      ttp.push(type.nodes.parse({ registry }));
+    }
+
+    output += ttp.join(' & ');
+  } else if (!registry.omitTypeScript && (type || Types.length)) {
+    registry.isTypeScript = true;
+    var ttp = [];
+    if (Types.length) {
+      ttp.push(`{ ${Types.join(', ')} }`);
+    }
+
+    if (type) {
+      ttp.push(type.nodes.parse({ registry }));
+    }
+
+    ttp = ttp.join(' & ');
+
+    if (ParentTypes.Key) {
+      ttp = `${(registry.sources ? registry.sources.add(ParentTypes.KeyLoc) : '')}${ParentTypes.Key}: ${ttp}`;
+    }
+    
+    ParentTypes.push(ttp);
   }
 
   if (ParamObject.defaults) output += " = " + ParamObject.defaults.parse({ scope, vars, varExistent, tabs, constants, $such, that, varExistent, isValue: true, isParam: true, comments });
@@ -3134,17 +3192,26 @@ function ParseParamObject(ParamObject, { scope, vars, varExistent, tabs, constan
   return output;
 }
 
-function ParseParamArray(ParamArray, { scope, vars, varExistent, tabs, constants, $such, that, Insert, InsertAll, Params, comments = [], lastNodeLocation, registry, i, isInside }) {
-  var output = "[";
+function ParseParamArray(ParamArray, { scope, vars, varExistent, tabs, constants, $such, that, Insert, InsertAll, Params, comments = [], lastNodeLocation, registry, i, isInside, Types: ParentTypes }) {
+  var output = "[",
+    Types = [];
+
   for (let Entry of ParamArray) {
     if (Entry) {
-      output += ParseParam(Entry, { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments, comments, i, isInside });
+      output += ParseParam(Entry, { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments, comments, i, isInside, isArray: true, Types, registry });
     }
+
     output += ", ";
   }
 
   output = output.replace(/, $/, '');
   output += "]";
+
+  if (Types.length && !registry.omitTypeScript) {
+    registry.isTypeScript = true;
+
+    output += `: [${Types.join(', ')}]`
+  }
 
   if (ParamArray.defaults) output += " = " + ParamArray.defaults.parse({ scope, vars, varExistent, tabs, constants, $such, that, varExistent, isValue: true, isParam: true, comments, comments });
 
@@ -3248,7 +3315,7 @@ function buildVarDefinitions(typeData, tabs, keyword, metaComments, rewrite, reg
   return results.length ? tab(registry.tabSize, tabs) + results.join('\n\n' + tab(registry.tabSize, tabs)) + '\n\n' : '';
 }
 
-function attachDescriptions(metaComments, typeData, tabs, registry) {
+function attachDescriptions(metaComments = [], typeData, tabs, registry) {
   let scaned = 0;
 
   for (var n = 0, len = metaComments.length; n < len; n++) {
@@ -3302,7 +3369,7 @@ function attachDescriptions(metaComments, typeData, tabs, registry) {
   }
 }
 
-function getDataOfMetaComments({ metaComments, ID, tabs, loc, registry }) {
+function getDataOfMetaComments({ metaComments = [], ID, tabs, loc, registry }) {
   let result;
 
   for (let n = 0, len = metaComments.length; n < len; n++) {
@@ -3357,6 +3424,12 @@ function getDataOfMetaComments({ metaComments, ID, tabs, loc, registry }) {
   }
 
   return result;
+}
+
+function merge({ first_line, first_column, ...first }, { last_line, last_column } = {}) {
+  if (!last_line) ({ last_line } = first);
+  if (!last_column) ({ last_column } = first);
+  return { first_line, first_column, last_line, last_column, src: first.src, type: first.type };
 }
 
 module.exports = { Parser, Nodes };

@@ -49,41 +49,51 @@
       if (options.nodes) return result;
       
       options.scope = names;
-      let { js, sources, isTypeScript } = new Parser(nodes, { comments, ...options }).parse(options);
+      let { js, sources, isTypeScript } = new Parser(nodes, { comments: options.supressComments ? [] : comments, ...options }).parse(options);
  
       let sourceMap;
-      if (options.sourceMaps) {
-        if (sources.length) {
-          for (let ind in sources) {
-            let source = sources[ind];
-            if (!source || !source.length) continue;
-            js = js.replace(source[0], (_, d) => {
-              let x, y;
-              x = js.slice(0, d).split(/\n/g).pop().length;
-              y = count(js.slice(0, d), '\n');
- 
-              sources[ind] = {
-                sourceLine: source[1].first_line - 1,
-                sourceColumn: source[1].first_column - 1,
-                lastSourceColumn: source[1].last_column - 1,
-                lastSourceLine: source[1].last_line - 1,
-                line: y,
-                column: x,
-                source: source[1].source,
-                sourceName: source[1].sourceName
-              }
-              return '';
-            });
+      if (sources.length) {
+        var ln = sources.length, stack = 0;
+        var match;
+        while (match = /\/\*@[0-9a-f]{18}\*\//g.exec(js.slice(stack))) {
+          var str = match[0];
+          var d = stack + match.index;
+          var ind = sources.findIndex(src => src[0] === str);
+          var source = sources[ind];
+
+          if (source && source.length) {
+            let x, y;
+            x = js.slice(0, d).split(/\n/g).pop().length;
+            y = count(js.slice(0, d), '\n');
+
+            sources[ind] = {
+              sourceLine: source[1].first_line - 1,
+              sourceColumn: source[1].first_column - 1,
+              lastSourceColumn: source[1].last_column - 1,
+              lastSourceLine: source[1].last_line - 1,
+              line: y,
+              column: x,
+              source: source[1].source,
+              sourceName: source[1].sourceName
+            }
+
+            js = js.slice(0, d) + js.slice(d).replace(str, "");
           }
- 
-          sourceMap = new SourceMap(sources).generate({ generatedFile: options.generatedFile, sourceMap: options.inlineMap ? script : undefined, ...options }, script);
+
+          stack += match.index;
         }
+
+        sourceMap = new SourceMap(sources).generate({ generatedFile: options.generatedFile, sourceMap: options.inlineMap ? script : undefined, ...options }, script);
+      }
+
+      if (options.sourceMaps) {
+        result.sourceMap = sourceMap;
       }
  
       if (isTypeScript) {
         let compileTS = {
           parse() {
-            return Elysion.compile(null, { ...options, omitTypeScript: true }, { nodes, tokens, comments, names });
+            return Elysion.compile(null, { ...options, omitTypeScript: true, isRecomp: true }, { nodes, tokens, comments, names });
           }
         }
  

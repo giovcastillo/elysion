@@ -1,13 +1,1 @@
-#: greets the user
-greet = with name:
-	console.log "Hello #{name}!"
-
-# Implicit object.
-class User
-  with { .id, .name, .color }
-
-new User
-  id: 'NjEzODQ2Mj'
-  name: 'john'
-  color: 'magenta'
-then greet
+var a :: string = ""

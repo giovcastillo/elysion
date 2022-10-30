@@ -228,7 +228,7 @@
 
 /*! Production::    Declaration : Assignment */
 
-/*! Production::    Declaration : Identifier */
+/*! Production::    Declaration : VARIDENTIFIER */
 
 /*! Production::    DeclarationKeyword : CONST */
 
@@ -833,6 +833,8 @@
 /*! Production::    ParamPropObj : PROPERTY ":" DEFAULTS Expression */
 
 /*! Production::    ParamPropObj : PROPERTY ":" ParamAssignable */
+
+/*! Production::    ParamPropObj : ParamIdentifier ":" */
 
 /*! Production::    ParamPropObj : ParamIdentifier */
 

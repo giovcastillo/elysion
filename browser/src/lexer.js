@@ -808,7 +808,7 @@ class Lexer {
                   this.createImplicitArray();
                 }
 
-                if (![":", "AS", "FROM", "AT", "RETURN", "YIELD", "ASYNC", "AWAIT"].includes(this.prev()[0])) {
+                if (this.uncontinuous.includes(this.prev()[0])) {
                   if (!['NEWLINE', 'INDENT', 'CALL_START', 'INDEX_START', '[', '{'].includes(this.prev()[0])) {
                     this.token('NEWLINE', 0, { generated: true });
                   }
@@ -885,6 +885,10 @@ class Lexer {
           if (this.prev()[0] === ",") this.prev().$$accept = true;
           this.forLineArrayGen = true;
         }
+      }
+      
+      if (token === "," && this.stage().assignKwd) {
+        this.stage().seenEquals = false;
       }
 
       return input.length;
@@ -1047,7 +1051,7 @@ class Lexer {
       if (this.prev()[0] === ".") {
         tag = "PROPERTY"
       } else {
-        tag = "IDENTIFIER";
+        tag = (this.stage().assignKwd && !this.stage().seenEquals) ? "VARIDENTIFIER" : "IDENTIFIER";
         if (this.uncontinuous.includes(this.prev()[0]) && this.prev().spaced) {
           if (this.isELSON) return;
           if (this.isPossibleArray()) {
@@ -1092,7 +1096,7 @@ class Lexer {
       let b = ((this.trueStage().label === "switch") && (this.opLine || /^(default|otherwise|else)$/.test(token)) && /^\s*(\{\s*)?\n/.test(this.chunk.slice(input.length)));
 
       this.token(tag, token);
-      if (((tag == "IDENTIFIER") || (tag == "THIS") || (tag == "SUCH") || (tag == "SUPER")) && colon && (this.inExplicit() && (/^(A[ST]|FROM|:|\[|\(|PARAM_START|DEFAULTS)$/.test(prev[0])) || !this.inExplicit() && (this.currExplicit() !== "}" || this.stage().label !== undefined)) && !b) {
+      if (((tag == "IDENTIFIER") || (tag == "VARIDENTIFIER") || (tag == "THIS") || (tag == "SUCH") || (tag == "SUPER") || this.assertTokens('THIS . PROPERTY') && this.tokens.slice(-3)[0][2].generated && this.paramLine) && colon && (this.inExplicit() && (/^(A[ST]|FROM|:|\[|\(|PARAM_START|DEFAULTS)$/.test(prev[0])) || (!this.inExplicit() || this.currExplicit() !== "}") && (this.currExplicit() !== "}" || this.stage().label !== undefined)) && !b) {
         if (!this.stage().contains.find(o => o[0] === "object")) {
           let prev = this.tokens.pop();
           ++prev.lvl;
@@ -1107,7 +1111,10 @@ class Lexer {
             let prevs = [prev];
             if (this.prev()[0] === "...") {
               prevs = [this.tokens.pop(), ...prevs];
+            } else if (this.assertTokens('THIS .')) {
+              prevs = [...this.tokens.splice(this.tokens.length - 2, 2), ...prevs];
             }
+
             this.tokens.push(this._token('{', '{', { generated: true, pair: this.position }), ...prevs);
             this.stage().lastValue = this.prev().stageId = this.store(['object', this.position]);
           }
@@ -1117,6 +1124,8 @@ class Lexer {
           let prevs = [prev];
           if (this.prev()[0] === "...") {
             prevs = [this.tokens.pop(), ...prevs];
+          } else if (this.assertTokens('THIS .')) {
+            prevs = [...this.tokens.splice(this.tokens.length - 2, 2), ...prevs];
           }
 
           if (this.prev()[0] === ":") {
@@ -1500,12 +1509,17 @@ class Lexer {
         origin = "as " + token
       }
 
+      if (this.prev()[0] === "VARIDENTIFIER") {
+        this.prev()[0] = "IDENTIFIER";
+      }
+
       this.token(token.toUpperCase(), token, { origin, $$accept: origin !== "=" || this.stage().typeKwd });
 
       if (this.inClass()) {
         this.skipped = this.indentLevel;
       }
 
+      if (this.stage().assignKwd) this.stage().seenEquals = true;
       return len;
     }
   }
@@ -1618,7 +1632,6 @@ class Lexer {
         this.prev().comma = !!comma;
 
         if ((newlines > 1) && this.stage().assignKwd) this.stage().assignKwd = "";
-        if ((newlines > 1) && this.stage().typeKwd) this.stage().typeKwd = "";
 
         if (this.inClass() && (!this.opLine)) {
           this.opLine = 'function';
@@ -1627,6 +1640,10 @@ class Lexer {
 
         if (bool) {
           this.prev().inImplicitObj = true
+        }
+
+        if (this.stage().assignKwd) {
+          this.stage().seenEquals = false;
         }
 
         updatePosition();
@@ -1675,8 +1692,8 @@ class Lexer {
           }
         } else {
           var tag = "INDENT", inArrayLevel = this.stage().contains.map(i => i[0]).includes('array'),
-            inAssignChain = this.stage().assignKwd,
-            inTypeStatement = this.stage().typeKwd,
+            inAssignChain = !!this.stage().assignKwd,
+            inTypeStatement = !!this.stage().typeKwd,
             output = true;
 
           let t, type = 'indent';
@@ -1714,7 +1731,10 @@ class Lexer {
           if ([inArrayLevel, inAssignChain].includes(true)) {
             if (this.prev()[0] === "NEWLINE") {
               this.tokens.pop();
-              if (this.prev()[0] !== ",") this.token(',', ',', { generated: true });
+            }
+
+            if (this.prev()[0] !== ",") {
+              this.token(',', ',', { generated: true });
             }
           }
 
@@ -2490,7 +2510,7 @@ class Lexer {
 
   indexables = 'THIS IDENTIFIER REGEX REGEX_END PROPERTY ] } ) CALL_END INDEX_END STRING_END STRING SUCH SUPER ARGUMENT'.split(' ')
 
-  uncontinuous = 'STRING STRING_END NUMBER UNDEFINED NULL BOOL THIS REGEX REGEX_END INFINITY TAG'.split(' ');
+  uncontinuous = 'STRING STRING_END NUMBER UNDEFINED NULL BOOL THIS REGEX REGEX_END INFINITY TAG'.split(' ')
 
   Opening = '( { {{ [ INDEX_START CALL_START INDENT'.split(" ")
 
