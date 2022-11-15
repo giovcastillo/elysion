@@ -248,6 +248,10 @@
 
 /*! Production::    Declare : DeclarationKeyword INDENT Declarations OUTDENT */
 
+/*! Production::    Defaults : AS */
+
+/*! Production::    Defaults : DEFAULTS */
+
 /*! Production::    Else : ElseOtherwise Block */
 
 /*! Production::    Else : ElseOtherwise Expression */
@@ -566,7 +570,17 @@
 
 /*! Production::    InterfaceProperties : InterfaceProperty */
 
-/*! Production::    InterfaceProperty : InterfaceKeyword? TypeArguments? Identifier? Params ":" TypeSentence */
+/*! Production::    InterfaceProperty : "[" Identifier "]" ":" INDENT TypeSentence OUTDENT */
+
+/*! Production::    InterfaceProperty : "[" Identifier "]" ":" NEWLINE TypeSentence */
+
+/*! Production::    InterfaceProperty : "[" Identifier "]" ":" TypeSentence */
+
+/*! Production::    InterfaceProperty : "[" PROPERTY ":" TypeSentence "]" ":" INDENT TypeSentence OUTDENT */
+
+/*! Production::    InterfaceProperty : "[" PROPERTY ":" TypeSentence "]" ":" NEWLINE TypeSentence */
+
+/*! Production::    InterfaceProperty : InterfaceKeyword? TypeArguments? Identifier? SoftParams ":" TypeSentence */
 
 /*! Production::    InterfaceProperty : PROPERTY ":" TypeSentence */
 
@@ -776,13 +790,13 @@
 
 /*! Production::    ParamAssignable : ParamArray */
 
-/*! Production::    ParamAssignable : ParamArray DEFAULTS Expression */
+/*! Production::    ParamAssignable : ParamArray Defaults Expression */
 
 /*! Production::    ParamAssignable : ParamIdentifier */
 
 /*! Production::    ParamAssignable : ParamObject */
 
-/*! Production::    ParamAssignable : ParamObject DEFAULTS Expression */
+/*! Production::    ParamAssignable : ParamObject Defaults Expression */
 
 /*! Production::    ParamIdentifier : "..." IDENTIFIER */
 
@@ -792,13 +806,13 @@
 
 /*! Production::    ParamIdentifier : IDENTIFIER */
 
-/*! Production::    ParamIdentifier : IDENTIFIER DEFAULTS Expression */
+/*! Production::    ParamIdentifier : IDENTIFIER Defaults Expression */
 
 /*! Production::    ParamIdentifier : THIS "." PROPERTY "..." */
 
 /*! Production::    ParamIdentifier : THIS "." PROPERTY */
 
-/*! Production::    ParamIdentifier : THIS "." PROPERTY DEFAULTS Expression */
+/*! Production::    ParamIdentifier : THIS "." PROPERTY Defaults Expression */
 
 /*! Production::    ParamIdentifier : THIS */
 
@@ -830,7 +844,7 @@
 
 /*! Production::    ParamPropObj : PROPERTY ":" */
 
-/*! Production::    ParamPropObj : PROPERTY ":" DEFAULTS Expression */
+/*! Production::    ParamPropObj : PROPERTY ":" Defaults Expression */
 
 /*! Production::    ParamPropObj : PROPERTY ":" ParamAssignable */
 
@@ -838,7 +852,7 @@
 
 /*! Production::    ParamPropObj : ParamIdentifier */
 
-/*! Production::    ParamPropObj : ParamIdentifier DEFAULTS Expression */
+/*! Production::    ParamPropObj : ParamIdentifier Defaults Expression */
 
 /*! Production::    Params : PARAM_START PARAM_END */
 
@@ -1016,6 +1030,18 @@
 
 /*! Production::    TypeDeclaration : Identifier TypeArguments? AS TypeSentence */
 
+/*! Production::    TypeObjProp : "[" Identifier "]" ":" INDENT TypeSentence OUTDENT */
+
+/*! Production::    TypeObjProp : "[" Identifier "]" ":" NEWLINE TypeSentence */
+
+/*! Production::    TypeObjProp : "[" Identifier "]" ":" TypeSentence */
+
+/*! Production::    TypeObjProp : "[" PROPERTY ":" TypeSentence "]" ":" INDENT TypeSentence OUTDENT */
+
+/*! Production::    TypeObjProp : "[" PROPERTY ":" TypeSentence "]" ":" NEWLINE TypeSentence */
+
+/*! Production::    TypeObjProp : "[" PROPERTY ":" TypeSentence "]" ":" TypeSentence */
+
 /*! Production::    TypeObjProp : Identifier */
 
 /*! Production::    TypeObjProp : PROPERTY ":" */
@@ -1034,21 +1060,17 @@
 
 /*! Production::    TypeObjProps : TypeObjProps OptComma NEWLINE TypeObjProp */
 
+/*! Production::    TypeObject : "{" "}" */
+
 /*! Production::    TypeObject : "{" INDENT TypeObjProps OUTDENT "}" */
 
 /*! Production::    TypeObject : "{" TypeObjProps "}" */
 
-/*! Production::    TypeSentence : TypeSentence "&" INDENT TypeValue OUTDENT */
+/*! Production::    TypeSentence : TypeSentence TYPE_JOIN INDENT TypeValue OUTDENT */
 
-/*! Production::    TypeSentence : TypeSentence "&" NEWLINE TypeValue */
+/*! Production::    TypeSentence : TypeSentence TYPE_JOIN NEWLINE TypeValue */
 
-/*! Production::    TypeSentence : TypeSentence "&" TypeValue */
-
-/*! Production::    TypeSentence : TypeSentence "|" INDENT TypeValue OUTDENT */
-
-/*! Production::    TypeSentence : TypeSentence "|" NEWLINE TypeValue */
-
-/*! Production::    TypeSentence : TypeSentence "|" TypeValue */
+/*! Production::    TypeSentence : TypeSentence TYPE_JOIN TypeValue */
 
 /*! Production::    TypeSentence : TypeValue */
 

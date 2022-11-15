@@ -818,7 +818,7 @@ Nodes.Class = class Class extends Base {
       ForeignExps = [];
       for (var _i = 0, _len = vBody[1].length; _i < _len; _i++) {
         var Line = vBody[1][_i];
-        if ((Line.unwrap.rule === "Value") && !!Line.unwrapUntil(node => (node instanceof Nodes.Function) && !/FUNCTION/.test(node.rule)) || Line.unwrap.rule === "Assign" && Line.unwraps(2).rule === "Assignment" && Line.unwraps(3)[1].rule === "Identifier") {
+        if ((Line.unwrap.rule === "Value") && Line.unwrapUntil && !!Line.unwrapUntil(node => (node instanceof Nodes.Function) && !/FUNCTION/.test(node.rule)) || Line.unwrap.rule === "Assign" && Line.unwraps(2).rule === "Assignment" && Line.unwraps(3)[1].rule === "Identifier") {
           Body.push(Line);
           continue;
         }
@@ -867,8 +867,8 @@ Nodes.Class = class Class extends Base {
 
     if (Body.length && classAugment && !registry.isRecomp) {
       let ctor, hasToString;
-      for (let [func] of Body.contents) {
-        let synt = func.unwrapUntil(x => x instanceof Nodes.Function);
+      for (let [func] of Body.contents.filter(Line => Line && Line.length)) {
+        let synt = func.unwrapUntil && func.unwrapUntil(x => x instanceof Nodes.Function);
         if (synt) {
           let funcName = synt.unwrap[0][0] ? synt.unwrap[0][0][1] : null;
           if ([null, "constructor"].includes(funcName) && !ctor) {
@@ -1790,7 +1790,7 @@ Nodes.If = class IfBlock extends Base {
 
         isElseIndirect = false;
 
-        isElseIf = (Else[1].length === 1) && !!Else.unwrapUntil(C => C instanceof Nodes.If);
+        isElseIf = (Else[1].length === 1) && Else.unwrapUntil && !!Else.unwrapUntil(C => C instanceof Nodes.If);
 
         Else = Else.parse({ that, $such, scope, vars, varExistent, constants, isChildren: true, tabs: tabs + 1 - isElseIf, func, comments, lastNodeLocation: Condition.loc, registry, FiresSuper, assignRes });
       }
@@ -3053,7 +3053,7 @@ function parseComment(comment, tabs, forceWrap = false, registry) {
   return commentOutput;
 }
 
-function ParseParam(Parameter, { scope, vars, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments = [], lastNodeLocation, registry = {}, i, isInside, isObject, isArray, Types }) {
+function ParseParam(Parameter, { scope, vars, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments = [], lastNodeLocation, registry = {}, i, isInside, isObject, isArray, Types, ValueKey }) {
   let output = "";
   comments = [];
   switch (Parameter[0]) {
@@ -3098,7 +3098,7 @@ function ParseParam(Parameter, { scope, vars, tabs, constants, $such, that, varE
             output += `: ` + (registry.sources ? registry.sources.add(merge(Parameter.loc, Parameter.loc.type.nodes.loc)) : '') + Parameter.loc.type.nodes.parse({ registry });
           }
         } else {
-          Types.push((registry.sources ? registry.sources.add(merge(Parameter.loc, Parameter.loc.type.nodes.loc)) : '') + Name + `: ` + (registry.sources ? registry.sources.add(Parameter.loc.type.nodes.loc) : '') + Parameter.loc.type.nodes.parse({ registry }));
+          Types.push((registry.sources ? registry.sources.add(merge(Parameter.loc, Parameter.loc.type.nodes.loc)) : '') + (ValueKey || Name) + `: ` + (registry.sources ? registry.sources.add(Parameter.loc.type.nodes.loc) : '') + Parameter.loc.type.nodes.parse({ registry }));
         }
       }
 
@@ -3137,7 +3137,7 @@ function ParseParamObject(ParamObject, { scope, vars, varExistent, tabs, constan
       if (Value) {
         Types.Key = Key;
         Types.KeyLoc = Loc || Value.loc;
-        output += ": " + (registry.sources ? registry.sources.add(Value.loc) : '') + ParseParam(Value, { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments, isObject: true, Types, registry });
+        output += ": " + (registry.sources ? registry.sources.add(Value.loc) : '') + ParseParam(Value, { scope, vars, varExistent, tabs, constants, $such, that, varExistent, Insert, InsertAll, Params, comments, isObject: true, ValueKey: Key, Types, registry });
         Types.Key = undefined;
         Types.KeyLoc = undefined;
       }

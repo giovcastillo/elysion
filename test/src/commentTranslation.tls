@@ -1,0 +1,5 @@
+#: x = {number} The horizontal axis
+#: y = {number} The vertical axis
+#: z = {number} The height/altitude axis
+Coordinate1 with [x, y, z]
+  # ...

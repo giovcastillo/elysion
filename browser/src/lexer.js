@@ -1051,7 +1051,7 @@ class Lexer {
       if (this.prev()[0] === ".") {
         tag = "PROPERTY"
       } else {
-        tag = (this.stage().assignKwd && !this.stage().seenEquals) ? "VARIDENTIFIER" : "IDENTIFIER";
+        tag = (this.stage().assignKwd && !this.stage().seenEquals && !this.stage().contains.length) ? "VARIDENTIFIER" : "IDENTIFIER";
         if (this.uncontinuous.includes(this.prev()[0]) && this.prev().spaced) {
           if (this.isELSON) return;
           if (this.isPossibleArray()) {
@@ -1071,7 +1071,7 @@ class Lexer {
 
       if ((tag == "IDENTIFIER") && !colon && (this.prev()[0] == ",") && (i = this.stage().contains.findIndex(s => s[0] === "object")) > -1) {
         this.tokens.pop();
-        this.close(false, i);
+        this.closeImplicitsTo(i, false);
 
         if (this.isPossibleArray()) { // flaghere
           this.createImplicitArray();
@@ -2247,7 +2247,7 @@ class Lexer {
   }
 
   isPossibleArray() {
-    return (this.stage().type === "indent") && (this.stage().label !== "import") && (this.stage().label !== "export") && !this.stage().contains.length && !this.stage().assignKwd && (this.portLine !== this.cursor.y && this.forAssignLine !== this.cursor.y) && (!this.inExplicit() && !(this.currExplicit() && [undefined, 'Root'].includes(this.stage().label)))
+    return (this.stage().type === "indent") && (this.stage().label !== "import") && (this.stage().label !== "export") && !this.stage().contains.length && !this.stage().assignKwd && (this.portLine !== this.cursor.y && this.forAssignLine !== this.cursor.y) && (!this.inExplicit() && !(this.currExplicit() && !(this.paramLine === this.cursor.y) && [undefined, 'Root'].includes(this.stage().label)))
   }
 
   inImplicitObj() {
@@ -2425,9 +2425,8 @@ class Lexer {
   }
 
   closeImplicitsTo(index, addNewlines) {
-    let stop = (this.stage().contains.length) + index;
     let { loc } = this.prev();
-    while (stop > index) {
+    while (this.stage().contains.length > index) {
       let stageId = this.stage().contains.length, implicit = this.stage().contains.pop();
       if (!implicit) break;
       switch (implicit[0]) {
